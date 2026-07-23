@@ -1,11 +1,21 @@
 import pandas as pd
 import numpy as np
 
-df_a = pd.read_csv("data/raw/applicants.csv", low_memory=False, sep=',')
-df_c = pd.read_csv("data/raw/credit_history.csv", low_memory=False, sep=',')
-df_m = pd.read_csv("data/raw/mobile_money_transactions.csv", low_memory=False, sep=',')
-df_p = pd.read_csv("data/raw/partners_metadata.csv", low_memory=False, sep=",")
- 
+
+df_finascore = pd.read_csv('data/merge/finascore.csv', low_memory=True)
+
+
+df_finascore = df_finascore.sort_values("date_demande")
+
+df_finascore.drop_duplicates("applicant_id", keep="last")
+df_finascore["age"] = df_finascore["age"].clip(18, 75)
+df_finascore['nb_transactions_mois'].isna().astype(int)
+df_finascore['jours_depuis_dernier_credit'].isna().astype(int)
+df_finascore['nb_credit'].isna().astype(int)
+df_finascore['max_retard'].isna().astype(int)
+df_finascore['anciennete_compte_mois'].isna().astype(int)
+df_finascore['anciennete_emploi'].isna().astype(int)
+df_finascore["ratio_endettement"] = df_finascore["ratio_endettement"].clip(lower=0)
 
 def parse_date(val):
     """Gère ISO, FR (dd/mm/yyyy), tiret, et timestamp Unix."""
@@ -18,8 +28,8 @@ def parse_date(val):
         except ValueError:
             continue
     return pd.NaT
-df_c['date_credit'].apply(parse_date)
-df_1['date_demande'].apply(parse_date)
+
+df_finascore['date_demande'] = df_finascore['date_demande'].apply(parse_date)
 
  
 def secteur(value:str) -> str:
@@ -30,13 +40,14 @@ def secteur(value:str) -> str:
         return "Agriculture"
     if value in {"artisan"}:
         return "Artisanat"
-    if value in {"negoce"}:
-        return "Commerce"
     if value in {"services"}:
         return "Service"
-    return value.strip().lower().capitalize()
+    if value in {"negoce"}:
+        return "Commerce"
+    return value.capitalize()
     
-df_a['secteur_activite'] = df_a['secteur_activite'].apply(secteur)
+df_finascore['secteur_activite'] = df_finascore['secteur_activite'].apply(secteur)
+
 
 def operateur(value:str) -> str:
     if pd.isna(value):
@@ -47,11 +58,10 @@ def operateur(value:str) -> str:
     if value in {"multi-operateur"}:
         return "Mixte"
     if value in {"mtn momo", "mtmmomo"}:
-        return "MTN"   
-    
+        return "MTN"       
     return value.upper()
 
-df_m['operateur'] = df_m['operateur'].apply(operateur)
+df_finascore['operateur'] = df_finascore['operateur'].apply(operateur)
 
 
 def zone(value:str) -> str:
@@ -64,7 +74,8 @@ def zone(value:str) -> str:
         return "Urbain"
     return value.capitalize()
 
-df_a['zone'] = df_a['zone'].apply(zone) 
+df_finascore['zone'] = df_finascore['zone'].apply(zone) 
+
 
 def pays(value:str) -> str:
     if pd.isna(value):
@@ -82,7 +93,7 @@ def pays(value:str) -> str:
         return "GAB"
     return value.upper()  
 
-df_a['pays'] = df_a['pays'].apply(pays)
+df_finascore['pays_x'] = df_finascore['pays_x'].apply(pays)
 
 
 def statut(value:str) -> str:
@@ -96,6 +107,10 @@ def statut(value:str) -> str:
     if value in {'impaye'}:
         return "Defaut"
     
-    return value.capitalize()e()
+    return value.capitalize()
    
-df_a['statut_final'] = df_c['statut_final'].apply(statut)  
+df_finascore['statut_final'] = df_finascore['statut_final'].apply(statut)  
+
+df_finascore.to_csv("data/processed/finascore_clean.csv", index=False)
+
+print("Nettoyage effectué de finascore")
