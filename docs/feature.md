@@ -26,4 +26,3 @@ Un demandeur qui a un crédit remboursé en 3 mois et dans les délais est rassu
 #### SURENDEMENT
 Un demandeur qui a un ration endement > 1. est une variable importante et eliminatoire pour le client.
 
-
