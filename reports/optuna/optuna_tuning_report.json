@@ -1,0 +1,29 @@
+{
+    "model_name": "xgboost_optuna",
+    "n_trials": 100,
+    "best_params": {
+        "n_estimators": 272,
+        "max_depth": 2,
+        "learning_rate": 0.01850484160074767,
+        "min_child_weight": 10,
+        "subsample": 0.9399505721975927,
+        "colsample_bytree": 0.898546719804259,
+        "gamma": 4.041185525989887,
+        "reg_alpha": 1.2650935190494823,
+        "reg_lambda": 8.904436019620771
+    },
+    "validation_metrics": {
+        "auc_roc": 0.6344821345563121,
+        "f1": 0.2653011460619361,
+        "precision": 0.17369093231162197,
+        "recall": 0.5614035087719298
+    },
+    "model_path": "models/optuna/xgboost_optuna.pkl",
+    "performance_gate": {
+        "metric": "auc_roc",
+        "required_threshold": 0.8,
+        "observed_value": 0.6344821345563121,
+        "passed": false,
+        "decision": "NOT PROMOTION"
+    }
+}

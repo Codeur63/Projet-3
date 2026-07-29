@@ -1,0 +1,33 @@
+{
+    "registered_model_name": "Finascore_model",
+    "candidate": {
+        "source_report": "reports/anomaly/anomaly_feature_model_comparison.json",
+        "model_name": "xgboost_with_anomaly_features",
+        "model_path": "models/xgboost_with_anomalies.pkl",
+        "metrics": {
+            "threshold": 0.5,
+            "accuracy": 0.618391959798995,
+            "auc_roc": 0.6294947268379103,
+            "f1": 0.25709254549011934,
+            "precision": 0.16846153846153847,
+            "recall": 0.5425268373245252
+        },
+        "selection_reason": "Modèle enrichi avec anomaly_score et is_anomaly."
+    },
+    "promotion_decision": {
+        "metric": "auc_roc",
+        "required_threshold": 0.8,
+        "observed_value": 0.6294947268379103,
+        "passed": false,
+        "decision": "DO_NOT_PROMOTE",
+        "registry_status": "staging_only",
+        "comment": "Le modèle ne respecte pas le seuil AUC >= 0.80. Il peut être enregistré pour traçabilité, mais ne doit pas être promu en production."
+    },
+    "registry_info": {
+        "registered": true,
+        "registered_model_name": "Finascore_model",
+        "model_version": "1",
+        "alias": "staging_only",
+        "error": null
+    }
+}

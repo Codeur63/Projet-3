@@ -1,0 +1,2 @@
+model,threshold,accuracy,auc_roc,f1,precision,recall,source
+xgboost_with_anomalies,0.5,0.618391959798995,0.6294947268379103,0.25709254549011934,0.16846153846153847,0.5425268373245252,test_final

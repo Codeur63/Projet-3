@@ -1,0 +1,9 @@
+{
+    "model_name": "xgboost",
+    "accuracy": 0.5894472361809046,
+    "auc_roc": 0.6315280932480046,
+    "f1": 0.259963768115942,
+    "precision": 0.16652161299680882,
+    "recall": 0.5923632610939112,
+    "model_path": "models/xgboost.pkl"
+}

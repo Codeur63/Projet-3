@@ -1,0 +1,24 @@
+{
+    "model_name": "xgboost",
+    "model_path": "models/xgboost.pkl",
+    "final_test_metrics": {
+        "threshold": 0.5,
+        "accuracy": 0.5973869346733668,
+        "auc_roc": 0.6376162969627784,
+        "f1": 0.26683748169838944,
+        "precision": 0.17140841758758524,
+        "recall": 0.601981833195706
+    },
+    "business_errors": {
+        "true_negative_bons_clients_acceptes": 5215,
+        "false_positive_bons_clients_refuses": 3524,
+        "false_negative_defauts_non_detectes": 482,
+        "true_positive_defauts_detectes": 729,
+        "commentaire": "Les faux négatifs sont les erreurs les plus coûteuses pour le risque crédit : le modèle accepte des clients qui feront défaut. Les faux positifs représentent des bons clients refusés, donc une perte d'opportunité."
+    },
+    "diagnostic_best_threshold_on_test": {
+        "threshold": 0.5099999999999998,
+        "f1": 0.26788036410923277,
+        "warning": "Ce seuil est calculé sur le test final. Il sert uniquement au diagnostic et ne doit pas être présenté comme seuil de production."
+    }
+}

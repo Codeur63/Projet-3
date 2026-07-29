@@ -1,0 +1,43 @@
+{
+    "model_name": "xgboost_optuna",
+    "model_path": "models/optuna/xgboost_optuna.pkl",
+    "threshold": 0.5,
+    "metrics": {
+        "threshold": 0.5,
+        "accuracy": 0.6245226130653266,
+        "auc_roc": 0.6380011148142447,
+        "f1": 0.2663000785545954,
+        "precision": 0.17469724297861375,
+        "recall": 0.5598678777869529
+    },
+    "confusion_summary": {
+        "true_negative_bons_clients_acceptes": 5536,
+        "false_positive_bons_clients_refuses": 3203,
+        "false_negative_defauts_non_detectes": 533,
+        "true_positive_defauts_detectes": 678,
+        "total_errors": 3736,
+        "total_observations": 9950,
+        "error_rate": 0.37547738693467336
+    },
+    "cost_assumptions": {
+        "lgd_rate": 0.6,
+        "fp_opportunity_rate": 0.08,
+        "amount_column_used": "avg_credit_xaf",
+        "default_amount_xaf": 1000000,
+        "default_fn_cost_xaf": 600000,
+        "default_fp_cost_xaf": 100000
+    },
+    "cost_summary": {
+        "total_cost_xaf": 215962380.0,
+        "avg_cost_xaf": 21704.761809045227,
+        "fn_total_cost_xaf": 121061800.0,
+        "fp_total_cost_xaf": 94900580.0
+    },
+    "performance_gate": {
+        "metric": "auc_roc",
+        "required_threshold": 0.8,
+        "observed_value": 0.6380011148142447,
+        "passed": false,
+        "decision": "DO_NOT_PROMOTE"
+    }
+}
