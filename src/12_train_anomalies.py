@@ -9,28 +9,24 @@ Réentraînement avec features d'anomalie
 """
 
 import json
-import joblib
 from pathlib import Path
 
+import joblib
 import mlflow
 import mlflow.sklearn
 import pandas as pd
-import numpy as np
-
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
-    roc_auc_score,
+    accuracy_score,
     f1_score,
     precision_score,
     recall_score,
-    accuracy_score,
+    roc_auc_score,
 )
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, RobustScaler
-
 from xgboost import XGBClassifier
-
 
 SPLITS_DIR = Path("data/splits")
 MODELS_DIR = Path("models")
@@ -53,7 +49,6 @@ DROP = [
 
 # Charger les datasets Anomalies
 def load_data():
-
     x_train_path = SPLITS_DIR / "X_train_with_anomalies.parquet"
     x_test_path = SPLITS_DIR / "X_test_with_anomalies.parquet"
     y_train_path = SPLITS_DIR / "y_train.parquet"
@@ -61,10 +56,7 @@ def load_data():
 
     for path in [x_train_path, x_test_path, y_train_path, y_test_path]:
         if not path.exists():
-            raise FileNotFoundError(
-                f"Fichier introuvable : {path}. "
-                "Exécute d'abord src/11_anomaly_detection.py."
-            )
+            raise FileNotFoundError(f"Fichier introuvable : {path}. " "Exécute d'abord src/11_anomaly_detection.py.")
 
     X_train = pd.read_parquet(x_train_path)
     X_test = pd.read_parquet(x_test_path)
@@ -80,7 +72,7 @@ def remove_excluded_columns(X):
     return X.drop(columns=cols_to_drop)
 
 
-# Utiliser les meilleurs parametres de Optuna  
+# Utiliser les meilleurs parametres de Optuna
 def load_best_params():
     params_path = REPORTS_DIR / "optuna_best_params.json"
 
@@ -107,13 +99,9 @@ def load_best_params():
 
 
 def select_column_types(X):
-    numeric_cols = X.select_dtypes(
-        exclude=["object"]
-    ).columns.tolist()
+    numeric_cols = X.select_dtypes(exclude=["object"]).columns.tolist()
 
-    categorical_cols = X.select_dtypes(
-        include=["object"]
-    ).columns.tolist()
+    categorical_cols = X.select_dtypes(include=["object"]).columns.tolist()
 
     return numeric_cols, categorical_cols
 
@@ -150,10 +138,7 @@ def build_model_pipeline(X_train, y_train, params):
     print(f"Colonnes catégorielles : {len(categorical_cols)}")
 
     if "anomaly_score" not in X_train.columns or "is_anomaly" not in X_train.columns:
-        raise ValueError(
-            "Les colonnes anomaly_score et is_anomaly sont absentes. "
-            "Exécute d'abord src/10_anomaly_detection.py."
-        )
+        raise ValueError("Les colonnes anomaly_score et is_anomaly sont absentes. " "Exécute d'abord src/10_anomaly_detection.py.")
 
     preprocessor = build_preprocessor(numeric_cols, categorical_cols)
 
@@ -178,7 +163,7 @@ def build_model_pipeline(X_train, y_train, params):
     return pipeline, numeric_cols, categorical_cols, scale_pos_weight
 
 
-# Métrique 
+# Métrique
 def compute_metrics(y_true, y_proba, threshold=THRESHOLD):
     y_pred = (y_proba >= threshold).astype(int)
 
@@ -288,11 +273,7 @@ def main():
         "required_threshold": PERFORMANCE_THRESHOLD,
         "observed_value": metrics["auc_roc"],
         "passed": metrics["auc_roc"] >= PERFORMANCE_THRESHOLD,
-        "decision": (
-            "PROMOTE_TO_PRODUCTION"
-            if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD
-            else "DO_NOT_PROMOTE"
-        ),
+        "decision": ("PROMOTE_TO_PRODUCTION" if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD else "DO_NOT_PROMOTE"),
     }
 
     comparison_report = {
@@ -301,11 +282,7 @@ def main():
         "test_metrics_with_anomalies": metrics,
         "previous_results_without_anomalies": previous_results,
         "performance_gate": performance_gate,
-        "interpretation": (
-            "Les features d'anomalie améliorent le modèle si l'AUC augmente de façon notable "
-            "par rapport au modèle sans anomalies. Si le gain est faible, elles peuvent être conservées "
-            "comme diagnostic métier mais ne changent pas la décision de non-promotion."
-        ),
+        "interpretation": ("Les features d'anomalie améliorent le modèle si l'AUC augmente de façon notable " "par rapport au modèle sans anomalies. Si le gain est faible, elles peuvent être conservées " "comme diagnostic métier mais ne changent pas la décision de non-promotion."),
     }
 
     report_path = REPORTS_DIR / "anomaly_feature_model_comparison.json"

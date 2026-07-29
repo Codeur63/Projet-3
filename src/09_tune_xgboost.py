@@ -5,28 +5,24 @@ Tuning XGBoost avec Optuna
     - Logger chaque trial dans MLflow
     - Sauvegarder les meilleurs paramètres et le meilleur modèle
     - Chercher une performance gate AUC >= 0.80
-    
+
 """
 
 import json
-import joblib
 from pathlib import Path
 
+import joblib
 import mlflow
 import mlflow.sklearn
-import numpy as np
 import optuna
 import pandas as pd
-
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import roc_auc_score, f1_score, precision_score, recall_score
+from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, RobustScaler
-
 from xgboost import XGBClassifier
-
 
 SPLITS_DIR = Path("data/splits")
 MODELS_DIR = Path("models/optuna")
@@ -40,11 +36,7 @@ RANDOM_STATE = 42
 N_TRIALS = 100
 PERFORMANCE_THRESHOLD = 0.80
 
-COLS_TO_DROP = [
-    "applicant_id",
-    "date_demande",
-    "nom_partenaire"
-]
+COLS_TO_DROP = ["applicant_id", "date_demande", "nom_partenaire"]
 
 
 def load_train_data():
@@ -59,13 +51,9 @@ def remove_excluded_columns(X):
 
 
 def detect_column_types(X):
-    numeric_cols = X.select_dtypes(
-        exclude=["object"]
-    ).columns.tolist()
+    numeric_cols = X.select_dtypes(exclude=["object"]).columns.tolist()
 
-    categorical_cols = X.select_dtypes(
-        include=["object"]
-    ).columns.tolist()
+    categorical_cols = X.select_dtypes(include=["object"]).columns.tolist()
 
     return numeric_cols, categorical_cols
 
@@ -257,12 +245,7 @@ def main():
                 "required_threshold": PERFORMANCE_THRESHOLD,
                 "observed_value": final_metrics["auc_roc"],
                 "passed": final_metrics["auc_roc"] >= PERFORMANCE_THRESHOLD,
-                "decision":
-                (
-                    "PROMOTE_TO_PRODUCTION"
-                    if final_metrics["auc_roc"] >= PERFORMANCE_THRESHOLD
-                    else "NOT PROMOTION"
-                ),
+                "decision": ("PROMOTE_TO_PRODUCTION" if final_metrics["auc_roc"] >= PERFORMANCE_THRESHOLD else "NOT PROMOTION"),
             },
         }
 

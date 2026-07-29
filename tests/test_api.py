@@ -1,15 +1,15 @@
 """
- Tests de l'API FastAPI FinaScore
-    - Vérifier que l'API démarre correctement
-    - Vérifier que le modèle est chargé
-    - Tester une prédiction individuelle
-    - Tester une prédiction batch
+Tests de l'API FastAPI FinaScore
+   - Vérifier que l'API démarre correctement
+   - Vérifier que le modèle est chargé
+   - Tester une prédiction individuelle
+   - Tester une prédiction batch
 """
 
-from fastapi.testclient import TestClient
-from api.main import app
 import pytest
+from fastapi.testclient import TestClient
 
+from api.main import app
 
 SAMPLE_FEATURES = {
     "age": 35,
@@ -24,12 +24,14 @@ SAMPLE_FEATURES = {
     "mobile_money_score": 72,
 }
 
+
 @pytest.fixture(scope="module")
 def client():
     with TestClient(app) as test_client:
         yield test_client
 
-# Test pour le root de l'API  
+
+# Test pour le root de l'API
 def test_root_endpoint(client):
     response = client.get("/")
     assert response.status_code == 200
@@ -71,9 +73,7 @@ def test_model_info_endpoint(client):
 
 
 def test_predict_endpoint(client):
-    payload = {
-        "features": SAMPLE_FEATURES
-    }
+    payload = {"features": SAMPLE_FEATURES}
 
     response = client.post("/predict", json=payload)
 
@@ -131,9 +131,7 @@ def test_predict_batch_endpoint(client):
 
 
 def test_predict_batch_empty_payload(client):
-    payload = {
-        "records": []
-    }
+    payload = {"records": []}
 
     response = client.post("/predict/batch", json=payload)
 

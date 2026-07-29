@@ -1,5 +1,5 @@
 """
-Cross-validation du meilleur modèle 
+Cross-validation du meilleur modèle
     - Évaluer la stabilité du modèle avec Stratified K-Fold k=5 (Si les AUC sont presque toutes semblable)
     - Calculer AUC, F1, Precision, Recall avec moyenne, écart-type et intervalle de confiance
     - Produire des prédictions out-of-fold
@@ -11,22 +11,19 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
-    roc_auc_score,
     f1_score,
     precision_score,
     recall_score,
+    roc_auc_score,
 )
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, RobustScaler
-
 from xgboost import XGBClassifier
-
 
 SPLITS_DIR = Path("data/splits")
 REPORTS_DIR = Path("reports")
@@ -66,13 +63,9 @@ def remove_excluded_columns(X):
 
 
 def detect_column_types(X):
-    numeric_cols = X.select_dtypes(
-        exclude=["object"]
-    ).columns.tolist()
+    numeric_cols = X.select_dtypes(exclude=["object"]).columns.tolist()
 
-    categorical_cols = X.select_dtypes(
-        include=["object"]
-    ).columns.tolist()
+    categorical_cols = X.select_dtypes(include=["object"]).columns.tolist()
 
     return numeric_cols, categorical_cols
 
@@ -134,7 +127,7 @@ def build_xgboost_pipeline(X, y):
 
 def compute_metrics(y_true, y_proba, threshold=THRESHOLD):
     "Calcule des métrics"
-    
+
     y_pred = (y_proba >= threshold).astype(int)
 
     return {
@@ -143,6 +136,7 @@ def compute_metrics(y_true, y_proba, threshold=THRESHOLD):
         "precision": precision_score(y_true, y_pred, zero_division=0),
         "recall": recall_score(y_true, y_pred, zero_division=0),
     }
+
 
 # Intervale de confiance
 def confidence_interval_95(values):
@@ -158,6 +152,7 @@ def confidence_interval_95(values):
         "ci95_low": mean - margin,
         "ci95_high": mean + margin,
     }
+
 
 def main():
     print("=" * 60)
@@ -209,12 +204,7 @@ def main():
 
         fold_metrics.append(metrics)
 
-        print(
-            f"AUC={metrics['auc_roc']:.4f} | "
-            f"F1={metrics['f1']:.4f} | "
-            f"Precision={metrics['precision']:.4f} | "
-            f"Recall={metrics['recall']:.4f}"
-        )
+        print(f"AUC={metrics['auc_roc']:.4f} | " f"F1={metrics['f1']:.4f} | " f"Precision={metrics['precision']:.4f} | " f"Recall={metrics['recall']:.4f}")
 
     fold_metrics_df = pd.DataFrame(fold_metrics)
     fold_metrics_df.to_csv(REPORTS_DIR / "validation/cv_fold_metrics.csv", index=False)
@@ -226,7 +216,7 @@ def main():
 
     auc_mean = float(summary["auc_roc"]["mean"])
     auc_std = float(summary["auc_roc"]["std"])
-    
+
     summary["n_splits"] = N_SPLITS
     summary["threshold"] = THRESHOLD
     passed_gate = bool(auc_mean >= 0.80)
@@ -237,11 +227,7 @@ def main():
         "observed_mean_cv": auc_mean,
         "observed_std_cv": auc_std,
         "passed": passed_gate,
-        "decision": (
-            "PROMOTE_TO_PRODUCTION"
-            if passed_gate
-            else "DO_NOT_PROMOTE"
-        ),
+        "decision": ("PROMOTE_TO_PRODUCTION" if passed_gate else "DO_NOT_PROMOTE"),
     }
 
     with open(REPORTS_DIR / "validation/cv_metrics.json", "w", encoding="utf-8") as f:
@@ -254,19 +240,12 @@ def main():
 
     oof_df.to_parquet(REPORTS_DIR / "validation/cv_oof_predictions.parquet", index=False)
 
-
-
     print("\nRésumé Cross Validation")
     print("---" * 10)
     for metric, values in summary.items():
         if isinstance(values, dict) and "mean" in values:
-            print(
-                f"{metric}: "
-                f"mean={values['mean']:.4f} | "
-                f"std={values['std']:.4f} | "
-                f"CI95=[{values['ci95_low']:.4f}, {values['ci95_high']:.4f}]"
-            )
-    
+            print(f"{metric}: " f"mean={values['mean']:.4f} | " f"std={values['std']:.4f} | " f"CI95=[{values['ci95_low']:.4f}, {values['ci95_high']:.4f}]")
+
     print("\nPerformance Gate CV")
     print("---" * 10)
     print(summary["performance_gate"])

@@ -9,13 +9,12 @@ Enregistrement du modèle candidat dans MLflow Model Registry
 """
 
 import json
-import joblib
 from pathlib import Path
 
+import joblib
 import mlflow
 import mlflow.sklearn
 from mlflow.tracking import MlflowClient
-
 
 MODELS_DIR = Path("models")
 REPORTS_DIR = Path("reports/")
@@ -30,7 +29,6 @@ PERFORMANCE_THRESHOLD = 0.80
 def load_json(path):
     with open(path, "r", encoding="utf-8") as file:
         return json.load(file)
-
 
 
 def find_best_available_candidate():
@@ -82,10 +80,7 @@ def find_best_available_candidate():
             "selection_reason": "Modèle champion issu de 05_train.py.",
         }
 
-    raise FileNotFoundError(
-        "Aucun candidat modèle trouvé. Exécute d'abord 05_train.py, "
-        "08_tune_xgboost_optuna.py ou 11_train_with_anomalies.py."
-    )
+    raise FileNotFoundError("Aucun candidat modèle trouvé. Exécute d'abord 05_train.py, " "08_tune_xgboost_optuna.py ou 11_train_with_anomalies.py.")
 
 
 def build_promotion_decision(metrics):
@@ -97,17 +92,11 @@ def build_promotion_decision(metrics):
     if passed:
         decision = "PROMOTE_TO_PRODUCTION"
         registry_status = "production_candidate"
-        comment = (
-            "Le modèle respecte le seuil AUC >= 0.80. "
-            "Il peut être considéré comme candidat à la production."
-        )
+        comment = "Le modèle respecte le seuil AUC >= 0.80. " "Il peut être considéré comme candidat à la production."
     else:
         decision = "NOT_PROMOTE"
         registry_status = "staging_only"
-        comment = (
-            "Le modèle ne respecte pas le seuil AUC >= 0.80. "
-            "Il peut être enregistré pour traçabilité, mais ne doit pas être promu en production."
-        )
+        comment = "Le modèle ne respecte pas le seuil AUC >= 0.80. Enregistrer mais pas promu."
 
     return {
         "metric": "auc_roc",

@@ -7,21 +7,19 @@ Analyse métier des erreurs de prédiction
 """
 
 import json
-import joblib
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
-
 from sklearn.metrics import (
+    accuracy_score,
     confusion_matrix,
-    roc_auc_score,
     f1_score,
     precision_score,
     recall_score,
-    accuracy_score,
+    roc_auc_score,
 )
-
 
 SPLITS_DIR = Path("data/splits")
 MODELS_DIR = Path("models")
@@ -59,9 +57,7 @@ def load_model():
     best_model_path = REPORTS_DIR / "best_model.json"
 
     if not best_model_path.exists():
-        raise FileNotFoundError(
-            "Aucun modèle disponible. Exécuté les scripts antérieurs"
-        )
+        raise FileNotFoundError("Aucun modèle disponible. Exécuté les scripts antérieurs")
 
     with open(best_model_path, "r", encoding="utf-8") as file:
         best_model_info = json.load(file)
@@ -188,21 +184,13 @@ def estimate_error_costs(df):
     fn_mask = df["error_type"] == "FN_defaut_non_detecte"
     fp_mask = df["error_type"] == "FP_bon_client_refuse"
 
-    df.loc[fn_mask, "estimated_cost_xaf"] = (
-        df.loc[fn_mask, "estimated_amount_xaf"] * LGD_RATE
-    )
+    df.loc[fn_mask, "estimated_cost_xaf"] = df.loc[fn_mask, "estimated_amount_xaf"] * LGD_RATE
 
-    df.loc[fp_mask, "estimated_cost_xaf"] = (
-        df.loc[fp_mask, "estimated_amount_xaf"] * FP_OPPORTUNITY_RATE
-    )
+    df.loc[fp_mask, "estimated_cost_xaf"] = df.loc[fp_mask, "estimated_amount_xaf"] * FP_OPPORTUNITY_RATE
 
-    df.loc[fn_mask & df["estimated_cost_xaf"].isna(), "estimated_cost_xaf"] = (
-        DEFAULT_FN_COST_XAF
-    )
+    df.loc[fn_mask & df["estimated_cost_xaf"].isna(), "estimated_cost_xaf"] = DEFAULT_FN_COST_XAF
 
-    df.loc[fp_mask & df["estimated_cost_xaf"].isna(), "estimated_cost_xaf"] = (
-        DEFAULT_FP_COST_XAF
-    )
+    df.loc[fp_mask & df["estimated_cost_xaf"].isna(), "estimated_cost_xaf"] = DEFAULT_FP_COST_XAF
 
     return df, amount_col
 
@@ -264,12 +252,8 @@ def subgroup_error_analysis(df, subgroup_cols):
                     "fp_rate": float(fp / total),
                     "fn_rate": float(fn / total),
                     "error_rate": float((fp + fn) / total),
-                    "estimated_total_cost_xaf": float(
-                        group["estimated_cost_xaf"].sum()
-                    ),
-                    "estimated_avg_cost_xaf": float(
-                        group["estimated_cost_xaf"].mean()
-                    ),
+                    "estimated_total_cost_xaf": float(group["estimated_cost_xaf"].sum()),
+                    "estimated_avg_cost_xaf": float(group["estimated_cost_xaf"].mean()),
                 }
             )
 
@@ -314,10 +298,7 @@ def threshold_cost_simulation(df):
 
         temp["y_pred_threshold"] = (temp["y_proba"] >= threshold).astype(int)
 
-        temp["error_type_threshold"] = [
-            assign_error_type(y_t, y_p)
-            for y_t, y_p in zip(temp[TARGET], temp["y_pred_threshold"])
-        ]
+        temp["error_type_threshold"] = [assign_error_type(y_t, y_p) for y_t, y_p in zip(temp[TARGET], temp["y_pred_threshold"])]
 
         temp["estimated_cost_xaf"] = 0.0
 
@@ -325,9 +306,7 @@ def threshold_cost_simulation(df):
         fp_mask = temp["error_type_threshold"] == "FP_bon_client_refuse"
 
         temp.loc[fn_mask, "estimated_cost_xaf"] = amount.loc[fn_mask] * LGD_RATE
-        temp.loc[fp_mask, "estimated_cost_xaf"] = (
-            amount.loc[fp_mask] * FP_OPPORTUNITY_RATE
-        )
+        temp.loc[fp_mask, "estimated_cost_xaf"] = amount.loc[fp_mask] * FP_OPPORTUNITY_RATE
 
         metrics = model_metrics(
             y_true=temp[TARGET],
@@ -491,17 +470,9 @@ Top 10 segments par coût estimé :
         top_segments = subgroup_report.head(10)
 
         for _, row in top_segments.iterrows():
-            content += (
-                f"| {row['subgroup_column']} | {row['subgroup_value']} | "
-                f"{int(row['n_samples'])} | {row['default_rate']:.2%} | "
-                f"{row['estimated_total_cost_xaf']:,.0f} XAF |\n"
-            )
+            content += f"| {row['subgroup_column']} | {row['subgroup_value']} | " f"{int(row['n_samples'])} | {row['default_rate']:.2%} | " f"{row['estimated_total_cost_xaf']:,.0f} XAF |\n"
 
-    promotion_decision = (
-        "PROMOTE_TO_PRODUCTION"
-        if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD
-        else "DO_NOT_PROMOTE"
-    )
+    promotion_decision = "PROMOTE_TO_PRODUCTION" if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD else "DO_NOT_PROMOTE"
 
     content += f"""
 
@@ -569,10 +540,7 @@ def main():
     error_df["y_proba"] = y_proba
     error_df["y_pred"] = y_pred
 
-    error_df["error_type"] = [
-        assign_error_type(y_t, y_p)
-        for y_t, y_p in zip(error_df[TARGET], error_df["y_pred"])
-    ]
+    error_df["error_type"] = [assign_error_type(y_t, y_p) for y_t, y_p in zip(error_df[TARGET], error_df["y_pred"])]
 
     error_df, amount_col = estimate_error_costs(error_df)
 
@@ -609,11 +577,7 @@ def main():
         "fp_total_cost_xaf": float(fp_total_cost),
     }
 
-    promotion_decision = (
-        "PROMOTE_TO_PRODUCTION"
-        if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD
-        else "DO_NOT_PROMOTE"
-    )
+    promotion_decision = "PROMOTE_TO_PRODUCTION" if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD else "DO_NOT_PROMOTE"
 
     summary = {
         "model_name": model_name,

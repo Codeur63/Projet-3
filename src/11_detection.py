@@ -7,17 +7,15 @@ Détection d'anomalies avec Isolation Forest
 
 """
 
+import json
 from pathlib import Path
 
-import json
-import numpy as np
-import pandas as pd
 import joblib
+import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import RobustScaler
 from sklearn.pipeline import Pipeline
-
+from sklearn.preprocessing import RobustScaler
 
 SPLITS_DIR = Path("data/splits")
 MODELS_DIR = Path("models")
@@ -38,6 +36,7 @@ DROP = [
     "applicant_id",
     "date_demande",
 ]
+
 
 # Charger les données d'entrainement et de test
 def load_data():
@@ -64,9 +63,7 @@ def select_numeric_features(X_train):
 
     X = X_train.drop(columns=cols_drop)
 
-    numeric_cols = X.select_dtypes(
-        exclude=["object"]
-    ).columns.tolist()
+    numeric_cols = X.select_dtypes(exclude=["object"]).columns.tolist()
 
     if not numeric_cols:
         raise ValueError("Aucune colonne numérique disponible pour Isolation Forest.")
@@ -116,8 +113,7 @@ def add_anomaly_features(pipeline, X, numeric_cols):
     X_enriched["anomaly_score"] = -decision_scores
     X_enriched["is_anomaly"] = (raw_predictions == -1).astype(int)
 
-    return X_enriched 
-
+    return X_enriched
 
 
 def summarize_anomalies(X_enriched, y, dataset_name):
@@ -125,20 +121,20 @@ def summarize_anomalies(X_enriched, y, dataset_name):
 
     df = X_enriched.copy()
     df[TARGET] = y.values
-    
+
     anomaly_df = df[df["is_anomaly"] == 1]
     normal_df = df[df["is_anomaly"] == 0]
 
     summary = {
         "dataset": dataset_name,
-        "n_rows": int(len(df)),
-        "n_anomalies": int(len(anomaly_df)),
-        "n_normal": int(len(normal_df)),
+        "n_rows": len(df),
+        "n_anomalies": len(anomaly_df),
+        "n_normal": len(normal_df),
         "anomaly_rate": float(df["is_anomaly"].mean()),
         "default_rate_global": float(df[TARGET].mean()),
         "default_rate_anomalies": float(anomaly_df[TARGET].mean()) if len(anomaly_df) > 0 else None,
         "default_rate_normal": float(normal_df[TARGET].mean()) if len(normal_df) > 0 else None,
-        "avg_anomaly_score": float(df['anomaly_score'].mean()),
+        "avg_anomaly_score": float(df["anomaly_score"].mean()),
         "contamination_parameter": CONTAMINATION,
     }
 
@@ -147,11 +143,7 @@ def summarize_anomalies(X_enriched, y, dataset_name):
 
 # Trouver des anomalies par pays, secteur et Zone
 def subgroup_anomaly_report(X_enriched, y, dataset_name):
-    subgroup_cols = [
-        "pays",
-        "secteur_activite",
-        "zone"
-        ]
+    subgroup_cols = ["pays", "secteur_activite", "zone"]
 
     rows = []
 
@@ -168,17 +160,14 @@ def subgroup_anomaly_report(X_enriched, y, dataset_name):
                     "dataset": dataset_name,
                     "subgroup_column": col,
                     "subgroup_value": str(value),
-                    "n_samples": int(len(group)),
+                    "n_samples": len(group),
                     "anomaly_rate": float(group["is_anomaly"].mean()),
                     # "default_rate": float(group[TARGET].mean()),
                     "avg_anomaly_score": float(group["anomaly_score"].mean()),
                 }
             )
 
-    return (
-        pd.DataFrame(rows)
-        .sort_values("anomaly_rate", ascending=False)
-    )
+    return pd.DataFrame(rows).sort_values("anomaly_rate", ascending=False)
 
 
 def numeric_profile_report(df, numeric_cols):
@@ -207,19 +196,14 @@ def numeric_profile_report(df, numeric_cols):
                 "anomaly_mean": float(anomaly_values.mean()),
                 "normal_median": float(normal_values.median()),
                 "anomaly_median": float(anomaly_values.median()),
-                "absolute_mean_difference": float(
-                    abs(anomaly_values.mean() - normal_values.mean())
-                ),
+                "absolute_mean_difference": float(abs(anomaly_values.mean() - normal_values.mean())),
             }
         )
 
     if not rows:
         return pd.DataFrame()
 
-    return (
-        pd.DataFrame(rows)
-        .sort_values("absolute_mean_difference", ascending=False)
-    )
+    return pd.DataFrame(rows).sort_values("absolute_mean_difference", ascending=False)
 
 
 def main():
@@ -239,7 +223,7 @@ def main():
 
     print("Entraînement Isolation Forest sur X_train ...")
     anomaly_pipeline.fit(X_train[numeric_cols])
-    
+
     X_train_enriched = add_anomaly_features(
         pipeline=anomaly_pipeline,
         X=X_train,
@@ -251,14 +235,13 @@ def main():
         X=X_test,
         numeric_cols=numeric_cols,
     )
-    
+
     train_output_path = SPLITS_DIR / "X_train_with_anomalies.parquet"
     test_output_path = SPLITS_DIR / "X_test_with_anomalies.parquet"
-    
+
     X_train_enriched.to_parquet(train_output_path, index=False)
     X_test_enriched.to_parquet(test_output_path, index=False)
 
-    
     model_path = MODELS_DIR / "isolation_forest.pkl"
     joblib.dump(anomaly_pipeline, model_path)
 
@@ -273,7 +256,6 @@ def main():
         y=y_test,
         dataset_name="test",
     )
-
 
     summary = {
         "method": "IsolationForest",
@@ -304,7 +286,6 @@ def main():
         ignore_index=True,
     )
 
- 
     subgroup_report.to_csv(
         REPORTS_DIR / "anomaly_detection_by_subgroup.csv",
         index=False,

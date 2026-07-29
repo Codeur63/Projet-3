@@ -1,7 +1,7 @@
 from pathlib import Path
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
-
 
 FEATURES_PATH = Path("data/features/features_dataset.csv")
 SPLITS_DIR = Path("data/splits")
@@ -13,11 +13,10 @@ RANDOM_STATE = 42
 
 
 def main():
-    
-    print('='*60)
-    print('Debut du Train Test Split')
-    print('='*60)
-    
+    print("=" * 60)
+    print("Debut du Train Test Split")
+    print("=" * 60)
+
     df_finascore = pd.read_csv(FEATURES_PATH, low_memory=False)
 
     X = df_finascore.drop(columns=[TARGET])
@@ -27,14 +26,8 @@ def main():
     print("Distribution target complète :")
     print(y.value_counts(normalize=True).round(2))
 
-    #Split stratifié
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=TEST_SIZE,
-        stratify=y,
-        random_state=RANDOM_STATE
-    )
+    # Split stratifié
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=TEST_SIZE, stratify=y, random_state=RANDOM_STATE)
 
     # Sauvegarde des fichiers
     X_train.to_parquet(SPLITS_DIR / "X_train.parquet", index=False)
@@ -52,8 +45,8 @@ def main():
 
     print("\nDistribution target test :")
     print(y_test.value_counts(normalize=True).round(4))
-    
-    print('='*10 + 'Sauvergade effectué des trains et des TESTS' + "="*10)
+
+    print("=" * 10 + "Sauvergade effectué des trains et des TESTS" + "=" * 10)
 
 
 if __name__ == "__main__":

@@ -4,27 +4,26 @@
     - Évaluer une seule fois sur le jeu de test final
     - Calculer AUC, F1, précision, rappel
     - Générer matrice de confusion, courbe ROC, distribution des scores
-    - Sauvegarder un rapport final 
+    - Sauvegarder un rapport final
 """
 
 import json
-import joblib
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-
 from pathlib import Path
+
+import joblib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from sklearn.metrics import (
-    roc_auc_score,
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
     f1_score,
     precision_score,
     recall_score,
-    accuracy_score,
-    confusion_matrix,
-    classification_report,
+    roc_auc_score,
     roc_curve,
 )
-
 
 SPLITS_DIR = Path("data/splits")
 REPORTS_DIR = Path("reports/evaluation")
@@ -33,11 +32,8 @@ REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 TARGET = "defaut_paiement"
 
 
-COLS_TO_DROP = [
-    "applicant_id",
-    "date_demande",
-    "nom_partenaire"
-]
+COLS_TO_DROP = ["applicant_id", "date_demande", "nom_partenaire"]
+
 
 # Load lest splits de test
 def load_test_data():
@@ -54,6 +50,7 @@ def load_test_data():
     y_test = pd.read_parquet(y_test_path)[TARGET].astype(int)
 
     return X_test, y_test
+
 
 # Exclure les colonnes pour le bruit
 def remove_excluded_columns(X):
@@ -231,11 +228,7 @@ def estimate_business_errors(y_true, y_pred):
         "false_positive_bons_clients_refuses": fp,
         "false_negative_defauts_non_detectes": fn,
         "true_positive_defauts_detectes": tp,
-        "commentaire": (
-            "Les faux négatifs sont les erreurs les plus coûteuses pour le risque crédit : "
-            "le modèle accepte des clients qui feront défaut. "
-            "Les faux positifs représentent des bons clients refusés, donc une perte d'opportunité."
-        ),
+        "commentaire": ("Les faux négatifs sont les erreurs les plus coûteuses pour le risque crédit : " "le modèle accepte des clients qui feront défaut. " "Les faux positifs représentent des bons clients refusés, donc une perte d'opportunité."),
     }
 
     return business_report
@@ -249,9 +242,7 @@ def main():
     best_model_path = REPORTS_DIR / "best_model.json"
 
     if not best_model_path.exists():
-        raise FileNotFoundError(
-            "Exécute d'abord 05_train.py pour générer reports/best_model.json."
-        )
+        raise FileNotFoundError("Exécute d'abord 05_train.py pour générer reports/best_model.json.")
 
     with open(best_model_path, "r", encoding="utf-8") as file:
         best_model_info = json.load(file)
@@ -276,7 +267,7 @@ def main():
 
     y_proba = pipeline.predict_proba(X_test)[:, 1]
     print(f"Calcul des probabilités... de {y_proba}")
-   
+
     # On défini un seuil que l'on pourrais manipuler
     threshold = float(best_model_info.get("best_threshold", 0.50))
 
@@ -307,10 +298,7 @@ def main():
         "diagnostic_best_threshold_on_test": {
             "threshold": diagnostic_threshold,
             "f1": diagnostic_f1,
-            "warning": (
-                "Ce seuil est calculé sur le test final. "
-                "Il sert uniquement au diagnostic et ne doit pas être présenté comme seuil de production."
-            ),
+            "warning": ("Ce seuil est calculé sur le test final. " "Il sert uniquement au diagnostic et ne doit pas être présenté comme seuil de production."),
         },
     }
 
@@ -332,20 +320,8 @@ def main():
         "required_threshold": PERFORMANCE_THRESHOLD,
         "observed_value": metrics["auc_roc"],
         "passed": metrics["auc_roc"] >= PERFORMANCE_THRESHOLD,
-        "decision": (
-            "PROMOTE_TO_PRODUCTION"
-            if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD
-            else "NOT_PRIMOTE"
-        ),
-        "comment": (
-            "Le modèle atteint le seuil de performance requis."
-            if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD
-            else (
-                "Le modèle ne respecte pas le seuil AUC >= 0.80. "
-                "Il ne doit pas être promu en production. "
-                "Le pipeline reste utilisable en environnement expérimental/staging."
-            )
-        )
+        "decision": ("PROMOTE_TO_PRODUCTION" if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD else "NOT_PRIMOTE"),
+        "comment": ("Le modèle atteint le seuil de performance requis." if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD else ("Le modèle ne respecte pas le seuil AUC >= 0.80. " "Il ne doit pas être promu en production. " "Le pipeline reste utilisable en environnement expérimental/staging.")),
     }
 
     with open(REPORTS_DIR / "evaluation/performance_gate.json", "w", encoding="utf-8") as f:
@@ -363,7 +339,7 @@ def main():
 
     print("\nPerformance Gate")
     print("----------------")
-    print(f"Seuil requis : 80")
+    print("Seuil requis : 80")
     print(f"AUC observée : {metrics['auc_roc']:.4f}")
     print(f"Décision : {performance_gate['decision']}")
 

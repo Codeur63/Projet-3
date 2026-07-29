@@ -1,10 +1,8 @@
 from pathlib import Path
+
 import pandas as pd
-import numpy as np
-
-from sklearn.metrics import roc_auc_score
 from sklearn.impute import SimpleImputer
-
+from sklearn.metrics import roc_auc_score
 
 FEATURES_PATH = Path("data/features/features_dataset.csv")
 REPORTS_DIR = Path("reports/diagnostics")
@@ -63,21 +61,20 @@ def compute_numeric_univariate_auc(df, target):
             auc = roc_auc_score(y, score)
             auc_corrected = max(auc, 1 - auc)
 
-            results.append({
-                "feature": col,
-                "auc_raw": auc,
-                "auc_corrected": auc_corrected,
-                "missing_rate": df[col].isna().mean(),
-                "n_unique": df[col].nunique(dropna=True),
-            })
+            results.append(
+                {
+                    "feature": col,
+                    "auc_raw": auc,
+                    "auc_corrected": auc_corrected,
+                    "missing_rate": df[col].isna().mean(),
+                    "n_unique": df[col].nunique(dropna=True),
+                }
+            )
 
         except Exception:
             continue
 
-    return (
-        pd.DataFrame(results)
-        .sort_values("auc_corrected", ascending=False)
-    )
+    return pd.DataFrame(results).sort_values("auc_corrected", ascending=False)
 
 
 def categorical_target_rate(df, target):
@@ -91,12 +88,7 @@ def categorical_target_rate(df, target):
         if col == target:
             continue
 
-        temp = (
-            df.groupby(col, dropna=False)[target]
-            .agg(["count", "mean"])
-            .reset_index()
-            .sort_values("mean", ascending=False)
-        )
+        temp = df.groupby(col, dropna=False)[target].agg(["count", "mean"]).reset_index().sort_values("mean", ascending=False)
 
         temp["feature"] = col
         temp = temp.rename(columns={"mean": "default_rate"})
@@ -131,20 +123,12 @@ def main():
     existing_important_cols = [col for col in IMPORTANT_COLS if col in df.columns]
 
     print("\nTaux de valeurs manquantes sur colonnes importantes :")
-    missing_report = (
-        df[existing_important_cols]
-        .isna()
-        .mean()
-        .sort_values(ascending=False)
-    )
+    missing_report = df[existing_important_cols].isna().mean().sort_values(ascending=False)
     missing_report.to_csv(REPORTS_DIR / "diagnostic_missing_important_cols.csv")
 
     print("\nAUC univariée des variables numériques, sauvergardé dans reports/diagnostic")
     auc_report = compute_numeric_univariate_auc(df, TARGET)
-    auc_report.to_csv(
-        REPORTS_DIR / "diagnostic_univariate_auc.csv",
-        index=False
-    )
+    auc_report.to_csv(REPORTS_DIR / "diagnostic_univariate_auc.csv", index=False)
 
     print("\nDiagnostic sauvegardé dans reports/")
     print("=" * 60)
