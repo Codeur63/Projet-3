@@ -34,6 +34,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Checkout code
+        uses: actions/checkout@v4  
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -79,7 +82,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t finascore-api:test . 
-          
+
       - name: Smoke test du conteneur
         run: |
           docker run -d -p 8000:8000 --name test-container finascore-api:test
