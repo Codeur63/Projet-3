@@ -1,0 +1,18 @@
+[tool.ruff]
+line-length = 300
+target-version = "py310"
+
+extend-exclude = ["notebooks/*", "venv/*"]
+
+[tool.ruff.lint]
+# Active les règles essentielles (pycodestyle, Pyflakes, isort)
+select = ["E", "F", "I"]
+
+ignore = [
+    "N999",   # Autorise les noms de fichiers commençant par un chiffre
+    "BLE001", # Desactive l'alerte sur les 'except Exception:' génériques
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
