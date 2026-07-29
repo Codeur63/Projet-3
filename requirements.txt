@@ -35,7 +35,6 @@ contourpy==1.3.3
 coverage==7.15.1
 cron_descriptor==2.0.6
 croniter==6.0.0
-cryptography==42.0.8
 cycler==0.12.1
 databricks-sdk==0.120.0
 defusedxml==0.7.1
