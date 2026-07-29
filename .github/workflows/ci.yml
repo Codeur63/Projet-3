@@ -39,14 +39,12 @@ jobs:
         run: |
           pytest tests/test_api.py -v
 
-    docker-build:
-      runs-on: ubuntu-latest
-      needs: api-tests
-
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v4
-
-        - name: Build Docker image
-          run: |
-            docker build -t finascore-api:test .      
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: api-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build Docker image
+        run: |
+          docker build -t finascore-api:test .      
