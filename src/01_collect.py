@@ -161,7 +161,7 @@ def main():
     ).reset_index()
 
 
-    # Aggrégation des crédits 
+    # # Aggrégation des crédits 
     credit_agg = (
         credit
         .groupby("applicant_id")
@@ -213,10 +213,12 @@ def main():
     )
 
 
-    # Fusion avec mobile_money a la suite
+    # # Fusion avec mobile_money a la suite
     df_finascore = pd.merge(
         df_finascore, mobile_agg, on='applicant_id', how='left'
     )
+    
+    # df_finascore = applicants.copy()
 
     # Verification des dimensions
     print(f"Collecte terminée - dimension : {df_finascore.shape}")
