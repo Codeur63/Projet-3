@@ -1,0 +1,48 @@
+name: FinaScore CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-docker-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Docker files
+        run: |
+          test -f Dockerfile
+          test -f docker-compose.yml
+          test -d api
+          test -d models
+          test -f models/optuna/xgboost_optuna.pkl
+          test -f reports/model_registry_decision.json
+
+      - name: Log in to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io \
+            -u "${{ github.actor }}" \
+            --password-stdin
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ghcr.io/${{ github.repository_owner }}/finascore-api:latest \
+            -t ghcr.io/${{ github.repository_owner }}/finascore-api:${{ github.sha }} \
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/finascore-api:latest
+          docker push ghcr.io/${{ github.repository_owner }}/finascore-api:${{ github.sha }}
