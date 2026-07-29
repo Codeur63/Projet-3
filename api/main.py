@@ -7,41 +7,38 @@ API FastAPI pour le scoring crédit FinaScore SA
     - POST /predict/batch
 """
 
-from fastapi import FastAPI, HTTPException
-import joblib
-from api.model_loader import model_service
 from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, HTTPException
+
+from api.cache import cache_service
+from api.model_loader import model_service
 from api.schemas import (
-    PredictionRequest,
-    PredictionResponse,
     BatchPredictionRequest,
     BatchPredictionResponse,
     HealthResponse,
     ModelInfoResponse,
-    CacheStatusResponse,
+    PredictionRequest,
+    PredictionResponse,
 )
-from api.cache import cache_service
-
 
 app = FastAPI(
     title="FinaScore Credit Scoring API",
-    description=(
-        "API de scoring crédit basée sur un modèle ML. "
-        "Le modèle actuel est servi en mode staging/démonstration car le seuil "
-        "de performance production n'est pas atteint."
-    ),
+    description=("API de scoring crédit basée sur un modèle ML. " "Le modèle actuel est servi en mode staging/démonstration car le seuil " "de performance production n'est pas atteint."),
     version="0.1.0",
 )
 
-model= None
+model = None
+
 
 def ensure_model_loaded():
     if model_service.model is None:
         model_service.load()
         cache_service.connect()
 
+
 @asynccontextmanager
-async def lifespan(app:FastAPI):
+async def lifespan(app: FastAPI):
     print("Démarage de L'API Finascaore")
     try:
         model_service.load()
@@ -51,7 +48,7 @@ async def lifespan(app:FastAPI):
         print(f"Erreur Critique avec le LifeSpan(Démarrqge API) : {e}")
 
     yield
-    
+
     print("Arrêt de l'API")
 
 
@@ -64,23 +61,17 @@ def root():
     }
 
 
-@app.get("/cache/status", tags=['Cache'])
+@app.get("/cache/status", tags=["Cache"])
 def cache_status():
-    return {
-        "status": "ok",
-        "model_loaded": model_service.model is not None,
-        "cache": cache_service.client
-    }
+    return {"status": "ok", "model_loaded": model_service.model is not None, "cache": cache_service.client}
+
 
 @app.get("/health", response_model=HealthResponse, tags=["Monitoring"])
 def health():
-
     try:
         ensure_model_loaded()
-        model_loaded = model_service.model is not None
-    except Exception as e:
+    except Exception:
         print("Erreur de chargement du modèle: {e}")
-        model_loaded = False   
 
     return {
         "status": "ok",
@@ -90,11 +81,11 @@ def health():
 
 
 @app.get("/model/info", response_model=ModelInfoResponse, tags=["Model"])
-def model_info():    
+def model_info():
     try:
-        ensure_model_loaded()    
+        ensure_model_loaded()
     except Exception as e:
-        raise HTTPException(status_code=503, detail=f'Modèle non chargé : {e}')    
+        raise HTTPException(status_code=503, detail=f"Modèle non chargé : {e}")
 
     if model_service.model is None:
         raise HTTPException(status_code=503, detail="Modèle non chargé.")
@@ -103,17 +94,9 @@ def model_info():
     registry_alias = None
 
     if model_service.registry_decision:
-        promotion_decision = (
-            model_service.registry_decision
-            .get("promotion_decision", {})
-            .get("decision")
-        )
+        promotion_decision = model_service.registry_decision.get("promotion_decision", {}).get("decision")
 
-        registry_alias = (
-            model_service.registry_decision
-            .get("registry_info", {})
-            .get("alias")
-        )
+        registry_alias = model_service.registry_decision.get("registry_info", {}).get("alias")
 
     return {
         "model_name": model_service.model_name,
@@ -122,11 +105,7 @@ def model_info():
         "expected_columns": model_service.expected_columns,
         "promotion_decision": promotion_decision,
         "registry_alias": registry_alias,
-        "production_warning": (
-            "Modèle en staging/démonstration. "
-            "Ne pas utiliser pour une décision automatique de crédit réelle "
-            "tant que le performance gate AUC >= 0.80 n'est pas validé."
-        ),
+        "production_warning": ("Modèle en staging/démonstration. " "Ne pas utiliser pour une décision automatique de crédit réelle " "tant que le performance gate AUC >= 0.80 n'est pas validé."),
     }
 
 
@@ -147,10 +126,7 @@ def predict(request: PredictionRequest):
 
         result = model_service.predict_one(request.features)
 
-        result["warning"] = (
-            "Modèle non promu en production. Résultat à utiliser uniquement "
-            "pour démonstration ou aide à l'analyse."
-        )
+        result["warning"] = "Modèle non promu en production. Résultat à utiliser uniquement " "pour démonstration ou aide à l'analyse."
 
         result["cached"] = False
 
@@ -178,12 +154,8 @@ def predict_batch(request: BatchPredictionRequest):
         return {
             "n_records": len(predictions),
             "predictions": predictions,
-            "warning": (
-                "Modèle non promu en production. Résultats à utiliser uniquement "
-                "pour démonstration ou aide à l'analyse."
-            ),
+            "warning": ("Modèle non promu en production. Résultats à utiliser uniquement " "pour démonstration ou aide à l'analyse."),
         }
 
     except Exception as error:
         raise HTTPException(status_code=400, detail=str(error))
-    

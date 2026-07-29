@@ -1,13 +1,12 @@
 """
 Tests de charge de l'API FinaScore
-    - Simuler plusieurs utilisateur de l'APO  
+    - Simuler plusieurs utilisateur de l'APO
     - Tester les endpoints principaux de l'API
     - Mesurer les temps de réponse pour verifier le seuil p95 < 200ms
     - Vérifier le comportement sous charge
 """
 
-from locust import HttpUser, task, between
-
+from locust import HttpUser, between, task
 
 SAMPLE_FEATURES_1 = {
     "age": 35,
@@ -62,15 +61,11 @@ class FinaScoreUser(HttpUser):
 
     @task(1)
     def model_info(self):
-
         self.client.get("/model/info", name="/model/info")
 
     @task(5)
     def predict_one(self):
-
-        payload = {
-            "features": SAMPLE_FEATURES_1
-        }
+        payload = {"features": SAMPLE_FEATURES_1}
 
         self.client.post(
             "/predict",
@@ -80,7 +75,6 @@ class FinaScoreUser(HttpUser):
 
     @task(2)
     def predict_batch(self):
-
         payload = {
             "records": [
                 SAMPLE_FEATURES_1,

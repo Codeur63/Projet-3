@@ -4,10 +4,10 @@ Le modèle est chargé une seule fois au démarrage de l'API.
 """
 
 import json
-import joblib
-import pandas as pd
 from pathlib import Path
 
+import joblib
+import pandas as pd
 
 MODELS_DIR = Path("models")
 REPORTS_DIR = Path("reports/optuna")
@@ -93,9 +93,7 @@ class ModelService:
         if hasattr(preprocessor, "feature_names_in_"):
             return list(preprocessor.feature_names_in_)
 
-        raise ValueError(
-            "Impossible de récupérer les colonnes attendues par le modèle."
-        )
+        raise ValueError("Impossible de récupérer les colonnes attendues par le modèle.")
 
     def prepare_input(self, data: dict):
         """
@@ -136,9 +134,7 @@ class ModelService:
             "prediction": prediction,
             "probability_default": probability_default,
             "threshold": 0.5,
-            "decision_label": (
-                "risque_defaut" if prediction == 1 else "bon_payeur_probable"
-            ),
+            "decision_label": ("risque_defaut" if prediction == 1 else "bon_payeur_probable"),
         }
 
     def predict_batch(self, records: list[dict]):
@@ -160,9 +156,7 @@ class ModelService:
                     "prediction": pred,
                     "probability_default": float(proba),
                     "threshold": 0.5,
-                    "decision_label": (
-                        "risque_defaut" if pred == 1 else "bon_payeur_probable"
-                    ),
+                    "decision_label": ("risque_defaut" if pred == 1 else "bon_payeur_probable"),
                 }
             )
 

@@ -1,7 +1,3 @@
-"""
-api/schemas.py - Schémas Pydantic pour l'API FinaScore
-"""
-
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -38,6 +34,7 @@ class PredictionResponse(BaseModel):
     threshold: float
     decision_label: str
     warning: str | None = None
+    cached: bool = False
 
 
 class BatchPredictionRequest(BaseModel):
@@ -75,16 +72,6 @@ class ModelInfoResponse(BaseModel):
     promotion_decision: str | None
     registry_alias: str | None
     production_warning: str
-    
-class PredictionResponse(BaseModel):
-    """Réponse d'une prédiction individuelle."""
-
-    prediction: int
-    probability_default: float
-    threshold: float
-    decision_label: str
-    warning: str | None = None
-    cached: bool = False
 
 
 class CacheStatusResponse(BaseModel):
@@ -93,4 +80,4 @@ class CacheStatusResponse(BaseModel):
     redis_url: str
     connected: bool
     error: str | None
-    ttl_seconds: int    
+    ttl_seconds: int

@@ -2,13 +2,12 @@
 Service Redis pour le cache des prédictions
 """
 
-import os
-import json
 import hashlib
+import json
+import os
 from typing import Any
 
 import redis
-
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/")
 CACHE_TTL_SECONDS = 3600
