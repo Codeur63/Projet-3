@@ -34,9 +34,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Checkout code
-        uses: actions/checkout@v4  
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -44,8 +41,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
           pip install pytest-cov
 
       - name: Start Redis
@@ -55,13 +50,13 @@ jobs:
 
       - name: Check project structure
         run: |
-          test -d ${{ github.workspace }}/api
-          test -d ${{ github.workspace }}/tests
-          test -d ${{ github.workspace }}/models
-          test -f ${{ github.workspace }}/api/main.py
-          test -f ${{ github.workspace }}/api/model_loader.py
-          test -f ${{ github.workspace }}/tests/test_api.py
-          test -f ${{ github.workspace }}/models/optuna/optuna_xgboost.pkl
+          test -d api/
+          test -d tests/
+          test -d models/
+          test -f api/main.py
+          test -f api/model_loader.py
+          test -f tests/test_api.py
+          test -f models/optuna/optuna_xgboost.pkl
 
       - name: Run API tests
         env:
