@@ -4,3 +4,5 @@ __pycache__/
 .env
 
 mlruns/
+mlflow.db
+.pre-commit-config.yaml
