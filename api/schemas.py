@@ -4,8 +4,6 @@ from pydantic import BaseModel, Field
 
 
 class PredictionRequest(BaseModel):
-    """Requête pour une prédiction individuelle."""
-
     features: dict[str, Any] = Field(
         ...,
         description="Dictionnaire contenant les variables du demandeur.",
@@ -27,8 +25,6 @@ class PredictionRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """Réponse d'une prédiction individuelle."""
-
     prediction: int
     probability_default: float
     threshold: float
@@ -38,8 +34,6 @@ class PredictionResponse(BaseModel):
 
 
 class BatchPredictionRequest(BaseModel):
-    """Requête pour prédiction batch."""
-
     records: list[dict[str, Any]] = Field(
         ...,
         description="Liste de dictionnaires de variables demandeur.",
@@ -47,26 +41,21 @@ class BatchPredictionRequest(BaseModel):
 
 
 class BatchPredictionResponse(BaseModel):
-    """Réponse d'une prédiction batch."""
-
     n_records: int
     predictions: list[dict[str, Any]]
     warning: str | None = None
 
 
 class HealthResponse(BaseModel):
-    """Réponse health check."""
-
     status: str
     model_loaded: bool
     model_name: str | None
 
 
 class ModelInfoResponse(BaseModel):
-    """Informations sur le modèle chargé."""
-
     model_name: str
     model_path: str
+    model_metric: float | None
     expected_columns_count: int
     expected_columns: list[str]
     promotion_decision: str | None
@@ -75,8 +64,6 @@ class ModelInfoResponse(BaseModel):
 
 
 class CacheStatusResponse(BaseModel):
-    """Statut du cache Redis."""
-
     redis_url: str
     connected: bool
     error: str | None

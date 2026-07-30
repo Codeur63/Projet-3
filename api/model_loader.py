@@ -4,55 +4,53 @@ Le modèle est chargé une seule fois au démarrage de l'API.
 """
 
 import json
+import logging
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import joblib
 import pandas as pd
 
-MODELS_DIR = Path("models")
-REPORTS_DIR = Path("reports/optuna")
+logger = logging.getLogger("finascore.model_loader")
 
-DEFAULT_MODEL_PATH = MODELS_DIR / "optuna/xgboost_optuna.pkl"
-REGISTRY_DECISION_PATH = REPORTS_DIR / "model_registry_decision.json"
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODELS_DIR = BASE_DIR / "models/optuna"
+REPORTS_DIR = BASE_DIR / "reports"
+
+DEFAULT_MODEL_PATH = MODELS_DIR / "xgboost_optuna.pkl"
+REGISTRY_DECISION_PATH = REPORTS_DIR / "registry/model_registry_decision.json"
 
 
+# Class Prediction API
 class ModelService:
-    """Service de prédiction pour le modèle FinaScore."""
-
     def __init__(self):
         self.model = None
-        self.model_path = None
-        self.model_name = None
-        self.expected_columns = None
-        self.registry_decision = None
+        self.model_path: Optional[Path] = None
+        self.model_name: Optional[str] = None
+        self.model_auc_roc: Optional[float] = None
+        self.expected_columns: List[str] = None
+        self.registry_decision: Optional[Dict[str, Any]] = None
 
     def load(self):
-        """Charge le modèle et ses métadonnées."""
-
         self.model_path = self._resolve_model_path()
 
         if not self.model_path.exists():
+            logger.error(f"Fichier modèle introuvable : {self.model_path}")
             raise FileNotFoundError(f"Modèle introuvable : {self.model_path}")
 
+        logger.info(f"Chargement du modèle depuis : {self.model_path}")
         self.model = joblib.load(self.model_path)
 
         self.expected_columns = self._extract_expected_columns()
-
         self.model_name = self.model_path.stem
-
         self.registry_decision = self._load_registry_decision()
 
+        self.model_auc_roc = self._extract_auc_roc()
+
+        logger.info(f"Modèle '{self.model_name}' chargé avec succès ({len(self.expected_columns)} features attendues).")
         return self
 
     def _resolve_model_path(self):
-        """
-        Sélectionne le meilleur modèle disponible.
-
-        Priorité :
-        1. modèle indiqué dans model_registry_decision.json
-        2. models/xgboost_optuna.pkl
-        """
-
         if REGISTRY_DECISION_PATH.exists():
             with open(REGISTRY_DECISION_PATH, "r", encoding="utf-8") as file:
                 registry_data = json.load(file)
@@ -66,22 +64,23 @@ class ModelService:
         return DEFAULT_MODEL_PATH
 
     def _load_registry_decision(self):
-        """Charge la décision de registry si disponible."""
-
         if not REGISTRY_DECISION_PATH.exists():
             return None
 
-        with open(REGISTRY_DECISION_PATH, "r", encoding="utf-8") as file:
-            return json.load(file)
+        try:
+            with open(REGISTRY_DECISION_PATH, "r", encoding="utf-8") as file:
+                return json.load(file)
+
+        except Exception as e:
+            logger.error(f"Impossible de charger le fichier registry decision : {e}")
+            return None
+
+    def _extract_auc_roc(self) -> Optional[float]:
+        if self.registry_decision:
+            return self.registry_decision.get("candidate", {}).get("metrics", {}).get("auc_roc")
+        return None
 
     def _extract_expected_columns(self):
-        """
-        Récupère les colonnes attendues par le pipeline sklearn.
-
-        Le ColumnTransformer garde normalement les noms des colonnes utilisées
-        pendant l'entraînement.
-        """
-
         if not hasattr(self.model, "named_steps"):
             raise ValueError("Le modèle chargé n'est pas un Pipeline sklearn valide.")
 
@@ -137,9 +136,8 @@ class ModelService:
             "decision_label": ("risque_defaut" if prediction == 1 else "bon_payeur_probable"),
         }
 
+    # Avoir plusieur demande pour des probabilités
     def predict_batch(self, records: list[dict]):
-        """Prédit le risque de défaut pour plusieurs demandes."""
-
         X = self.prepare_batch_input(records)
 
         probabilities = self.model.predict_proba(X)[:, 1]
