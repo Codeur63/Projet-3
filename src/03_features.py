@@ -95,6 +95,15 @@ def main():
     # # # Ratio endettement × ancienneté emploi : client endetté depuis longtemps = plus risqué
     # # df_finascore["ratio_endettement_x_anciennete"] = df_finascore["ratio_endettement"] * df_finascore["anciennete_emploi"]
 
+    LEAKAGE_COLS = [
+        "taux_defaut_historique",
+        "taux_remboursement_historique",
+    ]
+    existing_leakage_cols = [col for col in LEAKAGE_COLS if col in df_finascore.columns]
+    if existing_leakage_cols:
+        df_finascore = df_finascore.drop(columns=existing_leakage_cols)
+        print(f"Colonnes leakage supprimées : {existing_leakage_cols}")
+
     numeric_cols = df_finascore.select_dtypes(include=["number"]).columns
     inf_count = np.isinf(df_finascore[numeric_cols]).sum().sum()
     print(f"Infinity count : {inf_count}")
@@ -112,61 +121,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# # Interaction mobile money × crédit : score mobile pondéré par le nb de crédits
-# df_finascore["mobile_score_x_nb_credits"] = df_finascore["mobile_money_score"] * df_finascore["nb_credits_actifs"]
-
-
-# # Interaction primo-demandeur × ratio_endettement
-# df_finascore["primo_x_endettement"] = df_finascore["flag_primo_demandeur"].astype(int) * df_finascore["ratio_endettement"]
-
-# # Log du nombre de crédits
-# df_finascore["log_nb_credits_actifs"] = np.log1p(df_finascore["nb_credits_actifs"].fillna(0))
-
-# Ancienneté emploi / âge : proportion de vie active en emploi
-# df_finascore["ratio_anciennete_age"] = df_finascore["anciennete_emploi"] / df_finascore["age"]
-
-# DROP = [
-#     'applicant_id',
-#     'date_demande',
-#     'historique_credit',
-#     "nom_partenaire",
-#     "pays_partenaire",
-#     "type_partenaire",
-#     "seuil_score_partenaire",
-#     "volume_mensuel_partenaire",
-#     "revenu_mensuel_xaf",
-#     "total_montant_xaf",
-#     "regularite_score",
-#     "total_transation_mois",
-#     "anciennete_compte_mois",
-#     "nb_credits_defaut_hist",
-#     "nb_credits_rembourses_hist",
-#     "nb_credits_restructures_hist",
-#     "nb_credits_en_cours_hist",
-#     'operateur'
-# ]
-
-# # On ne garde que les colonnes qui existent réellement (évite les erreurs)
-# existing_cols_to_drop = [col for col in DROP if col in df_finascore.columns]
-# df_finascore = df_finascore.drop(columns=existing_cols_to_drop)
-
-# credit_features_to_fix = [
-#     "taux_retard_credit",
-#     "montant_moyen_credit_sur_revenu",
-#     "montant_total_credit_sur_revenu",
-#     "anciennete_credit_normalisee",
-#     "taux_defaut_historique",
-#     "taux_remboursement_historique"
-# ]
-# for col in credit_features_to_fix:
-#     if col in df_finascore.columns:
-#         # On remplace les NaN par 0 UNIQUEMENT pour les primo-demandeurs
-#         df_finascore[col] = np.where(
-#             df_finascore['flag_primo_demandeur'] == True,
-#             0,
-#             df_finascore[col]
-#         )
-
-# print("Enregistrer le dataset")

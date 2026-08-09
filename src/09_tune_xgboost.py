@@ -16,13 +16,19 @@ import mlflow
 import mlflow.sklearn
 import optuna
 import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
-from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, RobustScaler
 from xgboost import XGBClassifier
+
+from common import (
+    RANDOM_STATE,
+    TARGET,
+    build_preprocessor,
+    compute_metrics,
+    make_promotion_gate,
+    remove_columns,
+    select_column_types,
+)
 
 SPLITS_DIR = Path("data/splits")
 MODELS_DIR = Path("models/optuna")
@@ -31,66 +37,13 @@ REPORTS_DIR = Path("reports/optuna")
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
-TARGET = "defaut_paiement"
-RANDOM_STATE = 42
 N_TRIALS = 100
-PERFORMANCE_THRESHOLD = 0.80
-
-COLS_TO_DROP = ["applicant_id", "date_demande", "nom_partenaire"]
 
 
-def load_train_data():
+def load_data():
     X = pd.read_parquet(SPLITS_DIR / "X_train.parquet")
     y = pd.read_parquet(SPLITS_DIR / "y_train.parquet")[TARGET].astype(int)
     return X, y
-
-
-def remove_excluded_columns(X):
-    cols_to_drop = [col for col in COLS_TO_DROP if col in X.columns]
-    return X.drop(columns=cols_to_drop)
-
-
-def detect_column_types(X):
-    numeric_cols = X.select_dtypes(exclude=["object"]).columns.tolist()
-
-    categorical_cols = X.select_dtypes(include=["object"]).columns.tolist()
-
-    return numeric_cols, categorical_cols
-
-
-def build_preprocessor(numeric_cols, categorical_cols):
-    numeric_pipeline = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="median")),
-            ("scaler", RobustScaler()),
-        ]
-    )
-
-    categorical_pipeline = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("encoder", OneHotEncoder(handle_unknown="ignore")),
-        ]
-    )
-
-    return ColumnTransformer(
-        transformers=[
-            ("num", numeric_pipeline, numeric_cols),
-            ("cat", categorical_pipeline, categorical_cols),
-        ],
-        remainder="drop",
-    )
-
-
-def optuna_metrics(y_true, y_proba, threshold=0.5):
-    y_pred = (y_proba >= threshold).astype(int)
-
-    return {
-        "auc_roc": roc_auc_score(y_true, y_proba),
-        "f1": f1_score(y_true, y_pred, zero_division=0),
-        "precision": precision_score(y_true, y_pred, zero_division=0),
-        "recall": recall_score(y_true, y_pred, zero_division=0),
-    }
 
 
 def build_pipeline(params, preprocessor, scale_pos_weight):
@@ -118,8 +71,8 @@ def main():
 
     mlflow.set_experiment("Finascore")
 
-    X, y = load_train_data()
-    X = remove_excluded_columns(X)
+    X, y = load_data()
+    X = remove_columns(X)
 
     print(f"X shape : {X.shape}")
     print("Distribution target :")
@@ -133,7 +86,7 @@ def main():
         random_state=RANDOM_STATE,
     )
 
-    numeric_cols, categorical_cols = detect_column_types(X_train)
+    numeric_cols, categorical_cols = select_column_types(X_train)
     preprocessor = build_preprocessor(numeric_cols, categorical_cols)
 
     scale_pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
@@ -167,7 +120,7 @@ def main():
             pipeline.fit(X_train, y_train)
 
             y_val_proba = pipeline.predict_proba(X_val)[:, 1]
-            metrics = optuna_metrics(y_val, y_val_proba)
+            metrics = compute_metrics(y_val, y_val_proba)
 
             mlflow.log_params(params)
             mlflow.log_metric("auc_roc", metrics["auc_roc"])
@@ -209,7 +162,7 @@ def main():
         best_pipeline.fit(X_train, y_train)
 
         y_val_proba = best_pipeline.predict_proba(X_val)[:, 1]
-        final_metrics = optuna_metrics(y_val, y_val_proba)
+        final_metrics = compute_metrics(y_val, y_val_proba)
 
         model_path = MODELS_DIR / "xgboost_optuna.pkl"
         joblib.dump(best_pipeline, model_path)
@@ -240,13 +193,7 @@ def main():
             "best_params": best_params,
             "validation_metrics": final_metrics,
             "model_path": str(model_path),
-            "performance_gate": {
-                "metric": "auc_roc",
-                "required_threshold": PERFORMANCE_THRESHOLD,
-                "observed_value": final_metrics["auc_roc"],
-                "passed": final_metrics["auc_roc"] >= PERFORMANCE_THRESHOLD,
-                "decision": ("PROMOTE_TO_PRODUCTION" if final_metrics["auc_roc"] >= PERFORMANCE_THRESHOLD else "NOT PROMOTION"),
-            },
+            "performance_gate": make_promotion_gate(final_metrics["auc_roc"]),
         }
 
         tuning_report_path = REPORTS_DIR / "optuna_tuning_report.json"

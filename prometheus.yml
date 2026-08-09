@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "finascore-api"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["finascore-api:8000"]

@@ -1,10 +1,7 @@
-name: FinaScore CI
+name: FinaScore CD
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
     branches:
       - main
 
@@ -27,7 +24,7 @@ jobs:
           test -d api
           test -d models
           test -f models/optuna/xgboost_optuna.pkl
-          test -f reports/model_registry_decision.json
+          test -f reports/registry/model_registry_decision.json
 
       - name: Log in to GitHub Container Registry
         run: |
@@ -38,6 +35,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
+            -f Dockerfile \
             -t ghcr.io/${{ github.repository_owner }}/finascore-api:latest \
             -t ghcr.io/${{ github.repository_owner }}/finascore-api:${{ github.sha }} \
             .

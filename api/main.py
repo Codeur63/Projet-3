@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="FinaScore Credit Scoring API",
-    description=("API de scoring crédit basée sur un modèle ML. " "Le modèle actuel est servi en mode staging/démonstration car le seuil " "de performance production n'est pas atteint."),
+    description=("API de scoring crédit basée sur un modèle ML. Le modèle actuel est servi en mode staging/démonstration car le seuil de performance production n'est pas atteint."),
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -123,6 +123,7 @@ def model_info():
 
     promotion_decision = None
     registry_alias = None
+    metric = None
 
     if model_service.registry_decision:
         promotion_decision = model_service.registry_decision.get("promotion_decision", {}).get("decision")

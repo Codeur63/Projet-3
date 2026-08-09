@@ -2,23 +2,30 @@
     "model_name": "xgboost",
     "model_path": "models/xgboost.pkl",
     "final_test_metrics": {
-        "threshold": 0.5,
-        "accuracy": 0.5973869346733668,
-        "auc_roc": 0.6376162969627784,
-        "f1": 0.26683748169838944,
-        "precision": 0.17140841758758524,
-        "recall": 0.601981833195706
+        "threshold": 0.5500000000000002,
+        "accuracy": 0.749145728643216,
+        "auc_roc": 0.6377838781683218,
+        "f1": 0.2513497300539892,
+        "precision": 0.19736222326895903,
+        "recall": 0.34599504541701076
     },
     "business_errors": {
-        "true_negative_bons_clients_acceptes": 5215,
-        "false_positive_bons_clients_refuses": 3524,
-        "false_negative_defauts_non_detectes": 482,
-        "true_positive_defauts_detectes": 729,
+        "true_negative_bons_clients_acceptes": 7035,
+        "false_positive_bons_clients_refuses": 1704,
+        "false_negative_defauts_non_detectes": 792,
+        "true_positive_defauts_detectes": 419,
         "commentaire": "Les faux négatifs sont les erreurs les plus coûteuses pour le risque crédit : le modèle accepte des clients qui feront défaut. Les faux positifs représentent des bons clients refusés, donc une perte d'opportunité."
+    },
+    "business_optimal_threshold": {
+        "threshold": 0.5500000000000002,
+        "total_cost": 5664.0,
+        "cost_fn": 5.0,
+        "cost_fp": 1.0,
+        "rationale": "Seuil minimisant le coût métier : défaut accepté (FN) = 5x le coût d'un bon client refusé (FP)."
     },
     "diagnostic_best_threshold_on_test": {
         "threshold": 0.5099999999999998,
-        "f1": 0.26788036410923277,
+        "f1": 0.2673206621704476,
         "warning": "Ce seuil est calculé sur le test final. Il sert uniquement au diagnostic et ne doit pas être présenté comme seuil de production."
     }
 }

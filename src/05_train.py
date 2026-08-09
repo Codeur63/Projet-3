@@ -74,14 +74,14 @@ def load_data():
     return X_train, y_train
 
 
-def remove_excluded_columns(X):
+def remove_columns(X):
     cols_to_drop = [col for col in COLS_TO_DROP if col in X.columns]
     return X.drop(columns=cols_to_drop)
 
 
-def detect_column_types(X):
-    numeric_cols = X.select_dtypes(include=["int64", "float64", "int32", "float32", "bool"]).columns.tolist()
-    categorical_cols = X.select_dtypes(include=["object", "category"]).columns.tolist()
+def select_column_types(X):
+    numeric_cols = X.select_dtypes(exclude=["object"]).columns.tolist()
+    categorical_cols = X.select_dtypes(include=["object"]).columns.tolist()
     return numeric_cols, categorical_cols
 
 
@@ -115,7 +115,7 @@ def get_base_models(y_train):
     return models, scale_pos_weight
 
 
-def get_xgb_param_distributions():
+def get_xgb_param():
     return {
         "model__n_estimators": randint(100, 800),
         "model__max_depth": randint(1, 8),
@@ -237,19 +237,18 @@ def main():
     mlflow.set_experiment("Finascore")
 
     X, y = load_data()
-    X = remove_excluded_columns(X)
-    # X_test = remove_excluded_columns(X_test)
+    X = remove_columns(X)
 
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, stratify=y, random_state=RANDOM_STATE)
 
     print(f"X_train shape : {X_train.shape} | X_val shape : {X_val} ")
 
-    numeric_cols, categorical_cols = detect_column_types(X_train)
+    numeric_cols, categorical_cols = select_column_types(X_train)
     print(f"Numeriques: {len(numeric_cols)} | Categorielles: {len(categorical_cols)}")
 
     preprocessor = build_preprocessor(numeric_cols, categorical_cols)
     models, scale_pos_weight = get_base_models(y_train)
-    xgb_dists = get_xgb_param_distributions()
+    xgb_dists = get_xgb_param()
 
     print(f"\nscale_pos_weight XGBoost: {round(scale_pos_weight, 2)}\n")
 

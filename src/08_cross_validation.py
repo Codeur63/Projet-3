@@ -11,37 +11,32 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 from sklearn.base import clone
-from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
-from sklearn.metrics import (
-    f1_score,
-    precision_score,
-    recall_score,
-    roc_auc_score,
-)
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, RobustScaler
 from xgboost import XGBClassifier
 
-SPLITS_DIR = Path("data/splits")
+from common import (
+    RANDOM_STATE,
+    SPLITS_DIR,
+    TARGET,
+    THRESHOLD,
+    build_preprocessor,
+    compute_metrics,
+    make_promotion_gate,
+    remove_columns,
+    select_column_types,
+)
+
 REPORTS_DIR = Path("reports")
-REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+VALIDATION_DIR = REPORTS_DIR / "validation"
+VALIDATION_DIR.mkdir(parents=True, exist_ok=True)
 
-TARGET = "defaut_paiement"
-RANDOM_STATE = 42
 N_SPLITS = 5
-THRESHOLD = 0.5
-
-COLS_TO_DROP = [
-    "applicant_id",
-    "date_demande",
-    "nom_partenaire",
-]
 
 
-def load_train_data():
+def load_data():
     X_train_path = SPLITS_DIR / "X_train.parquet"
     y_train_path = SPLITS_DIR / "y_train.parquet"
 
@@ -57,47 +52,8 @@ def load_train_data():
     return X, y
 
 
-def remove_excluded_columns(X):
-    cols_to_drop = [col for col in COLS_TO_DROP if col in X.columns]
-    return X.drop(columns=cols_to_drop)
-
-
-def detect_column_types(X):
-    numeric_cols = X.select_dtypes(exclude=["object"]).columns.tolist()
-
-    categorical_cols = X.select_dtypes(include=["object"]).columns.tolist()
-
-    return numeric_cols, categorical_cols
-
-
-def build_preprocessor(numeric_cols, categorical_cols):
-    numeric_pipeline = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="median")),
-            ("scaler", RobustScaler()),
-        ]
-    )
-
-    categorical_pipeline = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("encoder", OneHotEncoder(handle_unknown="ignore")),
-        ]
-    )
-
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", numeric_pipeline, numeric_cols),
-            ("cat", categorical_pipeline, categorical_cols),
-        ],
-        remainder="drop",
-    )
-
-    return preprocessor
-
-
 def build_xgboost_pipeline(X, y):
-    numeric_cols, categorical_cols = detect_column_types(X)
+    numeric_cols, categorical_cols = select_column_types(X)
     preprocessor = build_preprocessor(numeric_cols, categorical_cols)
 
     scale_pos_weight = (y == 0).sum() / (y == 1).sum()
@@ -115,43 +71,12 @@ def build_xgboost_pipeline(X, y):
         n_jobs=-1,
     )
 
-    pipeline = Pipeline(
+    return Pipeline(
         steps=[
             ("preprocessor", preprocessor),
             ("model", model),
         ]
     )
-
-    return pipeline
-
-
-def compute_metrics(y_true, y_proba, threshold=THRESHOLD):
-    "Calcule des métrics"
-
-    y_pred = (y_proba >= threshold).astype(int)
-
-    return {
-        "auc_roc": roc_auc_score(y_true, y_proba),
-        "f1": f1_score(y_true, y_pred, zero_division=0),
-        "precision": precision_score(y_true, y_pred, zero_division=0),
-        "recall": recall_score(y_true, y_pred, zero_division=0),
-    }
-
-
-# Intervale de confiance
-def confidence_interval_95(values):
-    values = np.array(values, dtype=float)
-    mean = values.mean()
-    std = values.std(ddof=1)
-
-    margin = 1.96 * std / np.sqrt(len(values))
-
-    return {
-        "mean": mean,
-        "std": std,
-        "ci95_low": mean - margin,
-        "ci95_high": mean + margin,
-    }
 
 
 def main():
@@ -159,13 +84,13 @@ def main():
     print("CROSS-VALIDATION STRATIFIED K-FOLD")
     print("=" * 60)
 
-    X_raw, y = load_train_data()
+    X_raw, y = load_data()
 
     print(f"X brut : {X_raw.shape}")
     print("Distribution target :")
     print(y.value_counts(normalize=True).round(4))
 
-    X_model = remove_excluded_columns(X_raw)
+    X_model = remove_columns(X_raw)
 
     print(f"X modèle après suppression colonnes : {X_model.shape}")
 
@@ -204,33 +129,28 @@ def main():
 
         fold_metrics.append(metrics)
 
-        print(f"AUC={metrics['auc_roc']:.4f} | " f"F1={metrics['f1']:.4f} | " f"Precision={metrics['precision']:.4f} | " f"Recall={metrics['recall']:.4f}")
+        print(f"AUC={metrics['auc_roc']:.4f} | F1={metrics['f1']:.4f} | Precision={metrics['precision']:.4f} | Recall={metrics['recall']:.4f}")
 
     fold_metrics_df = pd.DataFrame(fold_metrics)
-    fold_metrics_df.to_csv(REPORTS_DIR / "validation/cv_fold_metrics.csv", index=False)
+    fold_metrics_df.to_csv(VALIDATION_DIR / "cv_fold_metrics.csv", index=False)
 
-    summary = {}
+    metric_columns = ["auc_roc", "f1", "precision", "recall"]
+    summary = {"n_splits": N_SPLITS, "threshold": THRESHOLD, "per_fold": fold_metrics_df[metric_columns + ["fold"]].to_dict(orient="records")}
 
-    for metric in ["auc_roc", "f1", "precision", "recall"]:
-        summary[metric] = confidence_interval_95(fold_metrics_df[metric].values)
+    for metric in metric_columns:
+        values = fold_metrics_df[metric].astype(float)
+        mean = float(values.mean())
+        std = float(values.std(ddof=1)) if N_SPLITS > 1 else 0.0
+        se = std / np.sqrt(N_SPLITS)
+        ci_low = float(mean - stats.t.ppf(0.975, N_SPLITS - 1) * se)
+        ci_high = float(mean + stats.t.ppf(0.975, N_SPLITS - 1) * se)
+        summary[metric] = {"mean": mean, "std": std, "ci95_low": ci_low, "ci95_high": ci_high}
 
-    auc_mean = float(summary["auc_roc"]["mean"])
-    auc_std = float(summary["auc_roc"]["std"])
+    auc_mean = summary["auc_roc"]["mean"]
 
-    summary["n_splits"] = N_SPLITS
-    summary["threshold"] = THRESHOLD
-    passed_gate = bool(auc_mean >= 0.80)
+    summary["performance_gate"] = make_promotion_gate(auc_mean)
 
-    summary["performance_gate"] = {
-        "metric": "auc_roc",
-        "required_threshold": 0.80,
-        "observed_mean_cv": auc_mean,
-        "observed_std_cv": auc_std,
-        "passed": passed_gate,
-        "decision": ("PROMOTE_TO_PRODUCTION" if passed_gate else "DO_NOT_PROMOTE"),
-    }
-
-    with open(REPORTS_DIR / "validation/cv_metrics.json", "w", encoding="utf-8") as f:
+    with open(VALIDATION_DIR / "cv_metrics.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=4, ensure_ascii=False)
 
     oof_df = X_raw.copy()
@@ -238,13 +158,13 @@ def main():
     oof_df["y_proba"] = oof_predictions
     oof_df["y_pred"] = (oof_df["y_proba"] >= THRESHOLD).astype(int)
 
-    oof_df.to_parquet(REPORTS_DIR / "validation/cv_oof_predictions.parquet", index=False)
+    oof_df.to_parquet(VALIDATION_DIR / "cv_oof_predictions.parquet", index=False)
 
     print("\nRésumé Cross Validation")
     print("---" * 10)
     for metric, values in summary.items():
         if isinstance(values, dict) and "mean" in values:
-            print(f"{metric}: " f"mean={values['mean']:.4f} | " f"std={values['std']:.4f} | " f"CI95=[{values['ci95_low']:.4f}, {values['ci95_high']:.4f}]")
+            print(f"{metric}: mean={values['mean']:.4f} | std={values['std']:.4f} | CI95=[{values['ci95_low']:.4f}, {values['ci95_high']:.4f}]")
 
     print("\nPerformance Gate CV")
     print("---" * 10)

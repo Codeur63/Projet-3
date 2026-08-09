@@ -47,14 +47,21 @@ Le dataset est volontairement imparfait : doublons, valeurs manquantes, formats 
 
 ## 3. Installation 
 
-Pour avoir le projet, ensuite cd/projet-3 et installer les dépendances avec pip 
+Pour avoir le projet, ensuite cd/projet-3 et installer les dépendances avec pip ainsi qu'un environnement virtuel pour mettre les dépendances
 ```text
 git clone <url depot>
 cd <depot>
+
+python -m venv .venv ou python3 -m venv .venv
+
+source .venv/bin/activation 
+
 pip install -r requirements.txt
 ```
 
 voir le tracking des modeles ``` mlfow ui ```, lancer l'API ```docker-compose up -d ou docker compose up -d ``` selon les versions docker
+
+---
 
 ## 4. Run pipeline
 - For unix 
@@ -65,3 +72,19 @@ voir le tracking des modeles ``` mlfow ui ```, lancer l'API ```docker-compose up
     ``` python 
         python src/pipeline.py 
     ```
+- ou bien l'utilisation de Airflow pour l'orchestration du pipeline
+---
+
+## 5. Performances observées (résultats réels)
+
+> Les performances « attendues » du jeu de données (`data/raw/README.md` : AUC 0.86–0.88) n'ont pas été **atteint** sur les données synthétiques fournies. Avec les données et le travaille du feature engineering nous avons atteint ~0.63. Les valeurs mesurées ici sont celles du pipeline de ce dépôt.
+
+| Configuration | AUC-ROC (CV 5-fold) |
+|---|---|
+| Recette officielle du README (6 variables brutes) | ~0.60 |
+| **Pipeline FinaScore complet** (43 features, XGBoost) | **~0.63** |
+| Meilleure variable seule | 0.55 |
+
+**Lecture :** les variables fournies portent peu de signal individuel ; AUC ≥ 0.80 n'est pas atteignable avec ce jeu de données. Le levier principal pour y parvenir est la **collecte de nouvelles données** (d'après nos roc_curves).
+
+**Décision de promotion :** le performance gate (AUC ≥ 0.80) bloque la promotion en production ; le modèle reste en `staging_only`. Le seuil métier (coût FN = 5×FP) est optimisé dans `06_evaluate.py` (`reports/evaluation/final_evaluation_report.json`).

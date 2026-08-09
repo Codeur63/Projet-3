@@ -41,6 +41,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip install -r requirements.txt
           pip install pytest-cov
 
       - name: Start Redis
@@ -51,12 +52,15 @@ jobs:
       - name: Check project structure
         run: |
           echo "Vérification des répertoires..."
-
+          test -d api
+          test -d src
+          test -d models 
+          test -f models/optuna/xgboost_optuna.pkl
       - name: Run API tests
         env:
           REDIS_URL: redis://localhost:6379
         run: |
-          pytest tests/test_api.py -v --cov=api --cov-report=term-missing --cov-fail-under=70 
+          pytest tests/ -v --cov=api --cov-report=term-missing --cov-fail-under=70 
 
   docker-build:
     runs-on: ubuntu-latest
@@ -70,7 +74,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t finascore-api:test . 
+          docker build -f Dockerfile -t finascore-api:test . 
 
       - name: Smoke test du conteneur
         run: |

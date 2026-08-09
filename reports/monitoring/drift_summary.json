@@ -1,0 +1,74 @@
+{
+    "reference_dataset": "data/splits/X_train.parquet",
+    "current_dataset": "data/splits/X_test.parquet",
+    "n_reference_rows": 39800,
+    "n_current_rows": 9950,
+    "n_features": 42,
+    "n_drifted_features": 1,
+    "drift_share": 0.023809523809523808,
+    "alert_threshold": 0.15,
+    "alert_triggered": false,
+    "decision": "NO_DRIFT_ALERT",
+    "top_drifted_features": [
+        {
+            "feature": "applicant_id",
+            "method": "categorical_distribution_distance",
+            "drift_score": 1.0000000000000002,
+            "drift_detected": true
+        },
+        {
+            "feature": "date_demande",
+            "method": "categorical_distribution_distance",
+            "drift_score": 0.17371859296482411,
+            "drift_detected": false
+        },
+        {
+            "feature": "nom_partenaire",
+            "method": "categorical_distribution_distance",
+            "drift_score": 0.06492462311557788,
+            "drift_detected": false
+        },
+        {
+            "feature": "pays_partenaire",
+            "method": "categorical_distribution_distance",
+            "drift_score": 0.016457286432160795,
+            "drift_detected": false
+        },
+        {
+            "feature": "operateur",
+            "method": "categorical_distribution_distance",
+            "drift_score": 0.013743718592964829,
+            "drift_detected": false
+        },
+        {
+            "feature": "dernier_statut_credit",
+            "method": "categorical_distribution_distance",
+            "drift_score": 0.010979899497487438,
+            "drift_detected": false
+        },
+        {
+            "feature": "type_partenaire",
+            "method": "categorical_distribution_distance",
+            "drift_score": 0.010125628140703502,
+            "drift_detected": false
+        },
+        {
+            "feature": "pays",
+            "method": "categorical_distribution_distance",
+            "drift_score": 0.00801507537688441,
+            "drift_detected": false
+        },
+        {
+            "feature": "zone",
+            "method": "categorical_distribution_distance",
+            "drift_score": 0.0041708542713567815,
+            "drift_detected": false
+        },
+        {
+            "feature": "avg_credit_xaf",
+            "method": "psi",
+            "drift_score": 0.002955446708826495,
+            "drift_detected": false
+        }
+    ]
+}

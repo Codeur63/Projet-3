@@ -470,7 +470,7 @@ Top 10 segments par coût estimé :
         top_segments = subgroup_report.head(10)
 
         for _, row in top_segments.iterrows():
-            content += f"| {row['subgroup_column']} | {row['subgroup_value']} | " f"{int(row['n_samples'])} | {row['default_rate']:.2%} | " f"{row['estimated_total_cost_xaf']:,.0f} XAF |\n"
+            content += f"| {row['subgroup_column']} | {row['subgroup_value']} | {int(row['n_samples'])} | {row['default_rate']:.2%} | {row['estimated_total_cost_xaf']:,.0f} XAF |\n"
 
     promotion_decision = "PROMOTE_TO_PRODUCTION" if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD else "DO_NOT_PROMOTE"
 

@@ -15,7 +15,7 @@
         "required_threshold": 0.8,
         "observed_value": 0.6294947268379103,
         "passed": false,
-        "decision": "DO_NOT_PROMOTE"
+        "decision": "NOT_PROMOTE"
     },
     "interpretation": "Les features d'anomalie améliorent le modèle si l'AUC augmente de façon notable par rapport au modèle sans anomalies. Si le gain est faible, elles peuvent être conservées comme diagnostic métier mais ne changent pas la décision de non-promotion."
 }

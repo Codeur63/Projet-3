@@ -2,13 +2,14 @@ services:
   finascore-api:
     build:
       context: .
-      dockerfile: DockerFile
+      dockerfile: Dockerfile
     container_name: finascore-api
     ports:
       - "8000:8000"
     environment:
       - ENV=staging
-      - REDIS_URL=redis://redis:6379/
+      - REDIS_URL=redis://redis:6379/0
+      - MODEL_PATH=models/optuna/xgboost_optuna.pkl
     depends_on:
       - redis
     restart: unless-stopped
@@ -19,3 +20,29 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: finascore-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - finascore-api
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: finascore-grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana  
+
+
+volumes:
+  grafana_data:      

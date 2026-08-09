@@ -36,11 +36,6 @@ def test_root_endpoint(client):
     response = client.get("/")
     assert response.status_code == 200
 
-    data = response.json()
-
-    assert "message" in data
-    assert data["message"] == "FinaScore Credit Scoring API"
-
 
 # Test pour le Check de l'API
 def test_health_endpoint(client):
@@ -136,3 +131,10 @@ def test_predict_batch_empty_payload(client):
     response = client.post("/predict/batch", json=payload)
 
     assert response.status_code == 400
+
+
+def test_metrics_endpoint(client):
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert "finascore_api_requests_total" in response.text

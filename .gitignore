@@ -3,6 +3,12 @@ __pycache__/
 .vscode/
 .env
 
+airflow/
+models/
 mlruns/
 mlflow.db
 .pre-commit-config.yaml
+.ruuf_cache
+.coverage
+pyproject.toml
+.dockerignore

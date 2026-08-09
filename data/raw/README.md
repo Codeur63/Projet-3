@@ -137,10 +137,21 @@ df.loc[df["revenu_mensuel_xaf"] < 0, "revenu_mensuel_xaf"] = np.nan
 
 # 4. Standardiser les pays
 pays_map = {
-    "cameroun":"CMR","cmr":"CMR","Cameroun":"CMR",
-    "gab":"GAB","Gabon":"GAB","cog":"COG","Congo":"COG","congo":"COG",
-    "caf":"CAF","RCA":"CAF","tcd":"TCD","Tchad":"TCD","tchad":"TCD",
-    "gnq":"GNQ","Guinee Eq.":"GNQ",
+    "cameroun": "CMR",
+    "cmr": "CMR",
+    "Cameroun": "CMR",
+    "gab": "GAB",
+    "Gabon": "GAB",
+    "cog": "COG",
+    "Congo": "COG",
+    "congo": "COG",
+    "caf": "CAF",
+    "RCA": "CAF",
+    "tcd": "TCD",
+    "Tchad": "TCD",
+    "tchad": "TCD",
+    "gnq": "GNQ",
+    "Guinee Eq.": "GNQ",
 }
 df["pays"] = df["pays"].replace(pays_map)
 
@@ -156,30 +167,30 @@ df["flag_no_mm"] = df["mobile_money_score"].isna().astype(int)
 ## 🚀 Démarrage rapide
 
 ```python
-from sklearn.pipeline     import Pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import RobustScaler, OneHotEncoder
-from sklearn.impute        import SimpleImputer
-from sklearn.compose       import ColumnTransformer
-from xgboost               import XGBClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
+from xgboost import XGBClassifier
 
-NUM_COLS  = ["revenu_mensuel_xaf","ratio_endettement","anciennete_emploi",
-             "historique_credit","nb_credits_actifs","mobile_money_score"]
-FLAG_COLS = ["flag_primo","flag_no_mm"]
-CAT_COLS  = ["pays","secteur_activite","zone"]
+NUM_COLS = ["revenu_mensuel_xaf", "ratio_endettement", "anciennete_emploi", "historique_credit", "nb_credits_actifs", "mobile_money_score"]
+FLAG_COLS = ["flag_primo", "flag_no_mm"]
+CAT_COLS = ["pays", "secteur_activite", "zone"]
 
-preproc = ColumnTransformer([
-    ("num", Pipeline([("imp",SimpleImputer(strategy="median")),
-                      ("sc", RobustScaler())]), NUM_COLS),
-    ("cat", Pipeline([("imp",SimpleImputer(strategy="most_frequent")),
-                      ("enc",OneHotEncoder(handle_unknown="ignore"))]), CAT_COLS),
-    ("flg", "passthrough", FLAG_COLS),
-])
+preproc = ColumnTransformer(
+    [
+        ("num", Pipeline([("imp", SimpleImputer(strategy="median")), ("sc", RobustScaler())]), NUM_COLS),
+        ("cat", Pipeline([("imp", SimpleImputer(strategy="most_frequent")), ("enc", OneHotEncoder(handle_unknown="ignore"))]), CAT_COLS),
+        ("flg", "passthrough", FLAG_COLS),
+    ]
+)
 
-pipe = Pipeline([
-    ("prep",  preproc),
-    ("model", XGBClassifier(n_estimators=300, max_depth=6,
-                            learning_rate=0.05, scale_pos_weight=7.3)),
-])
+pipe = Pipeline(
+    [
+        ("prep", preproc),
+        ("model", XGBClassifier(n_estimators=300, max_depth=6, learning_rate=0.05, scale_pos_weight=7.3)),
+    ]
+)
 pipe.fit(X_train, y_train)
 # → AUC-ROC attendu ≈ 0.86
 ```

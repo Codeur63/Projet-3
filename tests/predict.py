@@ -1,7 +1,7 @@
 import joblib
 import pandas as pd
 
-model = joblib.load("models/finascore_model.pkl")
+model = joblib.load("models/optuna/xgboost_optuna.pkl")
 
 client = pd.DataFrame([{"age": 34, "revenu_mensuel_xaf": 200000, "ratio_endettement": 0.3, "historique_credit": 500, "mobile_money_score": 80}])
 

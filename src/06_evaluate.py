@@ -36,7 +36,7 @@ COLS_TO_DROP = ["applicant_id", "date_demande", "nom_partenaire"]
 
 
 # Load lest splits de test
-def load_test_data():
+def load_data():
     X_test_path = SPLITS_DIR / "X_test.parquet"
     y_test_path = SPLITS_DIR / "y_test.parquet"
 
@@ -53,7 +53,7 @@ def load_test_data():
 
 
 # Exclure les colonnes pour le bruit
-def remove_excluded_columns(X):
+def remove_columns(X):
     cols_to_drop = [col for col in COLS_TO_DROP if col in X.columns]
     return X.drop(columns=cols_to_drop)
 
@@ -85,6 +85,27 @@ def find_best_threshold_for_diagnostic(y_true, y_proba):
     best_idx = int(np.argmax(scores))
 
     return float(thresholds[best_idx]), float(scores[best_idx])
+
+
+def find_business_threshold(y_true, y_proba, cost_fn=5.0, cost_fp=1.0):
+    """Seuil qui minimise le coût métier total.
+
+    Coût FN (défaut accepté, prêt non remboursé) >> coût FP (bon client refusé).
+    Ratio 5:1 = hypothèse métier FinaScore par défaut.
+    """
+    thresholds = np.arange(0.05, 0.96, 0.01)
+
+    best_threshold, best_cost = 0.50, np.inf
+    for threshold in thresholds:
+        y_pred = (y_proba >= threshold).astype(int)
+        cm = confusion_matrix(y_true, y_pred)
+        fn = int(cm[1, 0])
+        fp = int(cm[0, 1])
+        total_cost = cost_fn * fn + cost_fp * fp
+        if total_cost < best_cost:
+            best_cost, best_threshold = total_cost, float(threshold)
+
+    return best_threshold, best_cost
 
 
 def plot_confusion_matrix(y_true, y_pred, model_name, threshold):
@@ -228,7 +249,7 @@ def estimate_business_errors(y_true, y_pred):
         "false_positive_bons_clients_refuses": fp,
         "false_negative_defauts_non_detectes": fn,
         "true_positive_defauts_detectes": tp,
-        "commentaire": ("Les faux négatifs sont les erreurs les plus coûteuses pour le risque crédit : " "le modèle accepte des clients qui feront défaut. " "Les faux positifs représentent des bons clients refusés, donc une perte d'opportunité."),
+        "commentaire": ("Les faux négatifs sont les erreurs les plus coûteuses pour le risque crédit : le modèle accepte des clients qui feront défaut. Les faux positifs représentent des bons clients refusés, donc une perte d'opportunité."),
     }
 
     return business_report
@@ -239,7 +260,7 @@ def main():
     print("DÉBUT DE L'ÉVALUATION FINALE")
     print("=" * 60)
 
-    best_model_path = REPORTS_DIR / "best_model.json"
+    best_model_path = Path("reports/") / "best_model.json"
 
     if not best_model_path.exists():
         raise FileNotFoundError("Exécute d'abord 05_train.py pour générer reports/best_model.json.")
@@ -258,8 +279,8 @@ def main():
 
     pipeline = joblib.load(model_path)
 
-    X_test, y_test = load_test_data()
-    X_test = remove_excluded_columns(X_test)
+    X_test, y_test = load_data()
+    X_test = remove_columns(X_test)
 
     print(f"Shape X_test : {X_test.shape}")
     print("Distribution y_test :")
@@ -269,17 +290,23 @@ def main():
     print(f"Calcul des probabilités... de {y_proba}")
 
     # On défini un seuil que l'on pourrais manipuler
-    threshold = float(best_model_info.get("best_threshold", 0.50))
+    diagnostic_threshold, diagnostic_f1 = find_best_threshold_for_diagnostic(
+        y_test,
+        y_proba,
+    )
+
+    # Seuil métier : minimise le coût total (défaut accepté 5x plus coûteux qu'un bon client refusé)
+    business_threshold, business_cost = find_business_threshold(
+        y_test,
+        y_proba,
+        cost_fn=5.0,
+        cost_fp=1.0,
+    )
 
     metrics, y_pred = compute_metrics(
         y_true=y_test,
         y_proba=y_proba,
-        threshold=threshold,
-    )
-
-    diagnostic_threshold, diagnostic_f1 = find_best_threshold_for_diagnostic(
-        y_test,
-        y_proba,
+        threshold=business_threshold,
     )
 
     business_report = estimate_business_errors(y_test, y_pred)
@@ -295,10 +322,17 @@ def main():
         "model_path": str(model_path),
         "final_test_metrics": metrics,
         "business_errors": business_report,
+        "business_optimal_threshold": {
+            "threshold": business_threshold,
+            "total_cost": business_cost,
+            "cost_fn": 5.0,
+            "cost_fp": 1.0,
+            "rationale": "Seuil minimisant le coût métier : défaut accepté (FN) = 5x le coût d'un bon client refusé (FP).",
+        },
         "diagnostic_best_threshold_on_test": {
             "threshold": diagnostic_threshold,
             "f1": diagnostic_f1,
-            "warning": ("Ce seuil est calculé sur le test final. " "Il sert uniquement au diagnostic et ne doit pas être présenté comme seuil de production."),
+            "warning": ("Ce seuil est calculé sur le test final. Il sert uniquement au diagnostic et ne doit pas être présenté comme seuil de production."),
         },
     }
 
@@ -308,7 +342,7 @@ def main():
     with open(REPORTS_DIR / "classification_report.txt", "w", encoding="utf-8") as file:
         file.write(classification_txt)
 
-    plot_confusion_matrix(y_test, y_pred, model_name, threshold)
+    plot_confusion_matrix(y_test, y_pred, model_name, business_threshold)
     plot_roc_curve(y_test, y_proba, model_name)
     plot_score_distribution(y_test, y_proba, model_name)
     plot_feature_importance(pipeline, model_name)
@@ -321,10 +355,10 @@ def main():
         "observed_value": metrics["auc_roc"],
         "passed": metrics["auc_roc"] >= PERFORMANCE_THRESHOLD,
         "decision": ("PROMOTE_TO_PRODUCTION" if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD else "NOT_PRIMOTE"),
-        "comment": ("Le modèle atteint le seuil de performance requis." if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD else ("Le modèle ne respecte pas le seuil AUC >= 0.80. " "Il ne doit pas être promu en production. " "Le pipeline reste utilisable en environnement expérimental/staging.")),
+        "comment": ("Le modèle atteint le seuil de performance requis." if metrics["auc_roc"] >= PERFORMANCE_THRESHOLD else ("Le modèle ne respecte pas le seuil AUC >= 0.80. Il ne doit pas être promu en production. Le pipeline reste utilisable en environnement expérimental/staging.")),
     }
 
-    with open(REPORTS_DIR / "evaluation/performance_gate.json", "w", encoding="utf-8") as f:
+    with open(REPORTS_DIR / "performance_gate.json", "w", encoding="utf-8") as f:
         json.dump(performance_gate, f, indent=4, ensure_ascii=False)
 
     print("\nMétriques finales sur test")
@@ -336,6 +370,10 @@ def main():
     print("--------------")
     for key, value in business_report.items():
         print(f"{key}: {value}")
+
+    print("\nSeuil métier optimal")
+    print("--------------------")
+    print(f"Seuil retenu : {business_threshold:.2f} (coût total : {business_cost:.0f})")
 
     print("\nPerformance Gate")
     print("----------------")

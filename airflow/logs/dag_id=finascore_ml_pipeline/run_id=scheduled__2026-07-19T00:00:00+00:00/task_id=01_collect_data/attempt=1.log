@@ -1,0 +1,108 @@
+[2026-07-30T18:11:18.202+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-07-30T18:11:18.230+0000] {taskinstance.py:2632} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: finascore_ml_pipeline.01_collect_data scheduled__2026-07-19T00:00:00+00:00 [queued]>
+[2026-07-30T18:11:18.241+0000] {taskinstance.py:2632} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: finascore_ml_pipeline.01_collect_data scheduled__2026-07-19T00:00:00+00:00 [queued]>
+[2026-07-30T18:11:18.241+0000] {taskinstance.py:2885} INFO - Starting attempt 1 of 1
+[2026-07-30T18:11:18.252+0000] {taskinstance.py:2908} INFO - Executing <Task(BashOperator): 01_collect_data> on 2026-07-19 00:00:00+00:00
+[2026-07-30T18:11:18.258+0000] {standard_task_runner.py:72} INFO - Started process 172 to run task
+[2026-07-30T18:11:18.261+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'finascore_ml_pipeline', '01_collect_data', 'scheduled__2026-07-19T00:00:00+00:00', '--job-id', '2', '--raw', '--subdir', 'DAGS_FOLDER/finascore_pipeline_dag.py', '--cfg-path', '/tmp/tmpqutvkycm']
+[2026-07-30T18:11:18.264+0000] {standard_task_runner.py:105} INFO - Job 2: Subtask 01_collect_data
+[2026-07-30T18:11:18.331+0000] {task_command.py:467} INFO - Running <TaskInstance: finascore_ml_pipeline.01_collect_data scheduled__2026-07-19T00:00:00+00:00 [running]> on host 294b8ec48eab
+[2026-07-30T18:11:18.598+0000] {taskinstance.py:3158} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='finascore_ml_pipeline' AIRFLOW_CTX_TASK_ID='01_collect_data' AIRFLOW_CTX_EXECUTION_DATE='2026-07-19T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-07-19T00:00:00+00:00'
+[2026-07-30T18:11:18.598+0000] {taskinstance.py:740} INFO - ::endgroup::
+[2026-07-30T18:11:18.651+0000] {subprocess.py:78} INFO - Tmp dir root location: /tmp
+[2026-07-30T18:11:18.651+0000] {subprocess.py:88} INFO - Running command: ['/usr/bin/bash', '-c', 'cd /opt/***/project && python3 src/01_collect.py']
+[2026-07-30T18:11:18.667+0000] {subprocess.py:99} INFO - Output:
+[2026-07-30T18:11:56.001+0000] {subprocess.py:106} INFO - ============================================================
+[2026-07-30T18:11:56.001+0000] {subprocess.py:106} INFO - Nettoyage et collecte des données
+[2026-07-30T18:11:56.001+0000] {subprocess.py:106} INFO - ============================================================
+[2026-07-30T18:11:56.001+0000] {subprocess.py:106} INFO - Collecte terminée - dimension : (50000, 37)
+[2026-07-30T18:11:56.002+0000] {subprocess.py:106} INFO - ============================================================
+[2026-07-30T18:11:56.002+0000] {subprocess.py:106} INFO - Traceback (most recent call last):
+[2026-07-30T18:11:56.002+0000] {subprocess.py:106} INFO -   File "/opt/***/project/src/01_collect.py", line 194, in <module>
+[2026-07-30T18:11:56.002+0000] {subprocess.py:106} INFO -     main()
+[2026-07-30T18:11:56.002+0000] {subprocess.py:106} INFO -   File "/opt/***/project/src/01_collect.py", line 187, in main
+[2026-07-30T18:11:56.002+0000] {subprocess.py:106} INFO -     df_finascore.to_csv("data/merge/finascore.csv", index=False)
+[2026-07-30T18:11:56.003+0000] {subprocess.py:106} INFO -   File "/home/***/.local/lib/python3.11/site-packages/pandas/core/generic.py", line 3902, in to_csv
+[2026-07-30T18:11:56.003+0000] {subprocess.py:106} INFO -     return DataFrameRenderer(formatter).to_csv(
+[2026-07-30T18:11:56.003+0000] {subprocess.py:106} INFO -            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-30T18:11:56.003+0000] {subprocess.py:106} INFO -   File "/home/***/.local/lib/python3.11/site-packages/pandas/io/formats/format.py", line 1152, in to_csv
+[2026-07-30T18:11:56.003+0000] {subprocess.py:106} INFO -     csv_formatter.save()
+[2026-07-30T18:11:56.003+0000] {subprocess.py:106} INFO -   File "/home/***/.local/lib/python3.11/site-packages/pandas/io/formats/csvs.py", line 247, in save
+[2026-07-30T18:11:56.004+0000] {subprocess.py:106} INFO -     with get_handle(
+[2026-07-30T18:11:56.004+0000] {subprocess.py:106} INFO -          ^^^^^^^^^^^
+[2026-07-30T18:11:56.004+0000] {subprocess.py:106} INFO -   File "/home/***/.local/lib/python3.11/site-packages/pandas/io/common.py", line 863, in get_handle
+[2026-07-30T18:11:56.004+0000] {subprocess.py:106} INFO -     handle = open(
+[2026-07-30T18:11:56.004+0000] {subprocess.py:106} INFO -              ^^^^^
+[2026-07-30T18:11:56.004+0000] {subprocess.py:106} INFO - PermissionError: [Errno 13] Permission denied: 'data/merge/finascore.csv'
+[2026-07-30T18:11:56.209+0000] {subprocess.py:110} INFO - Command exited with return code 1
+[2026-07-30T18:11:56.236+0000] {taskinstance.py:3337} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 776, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 742, in _execute_callable
+    return ExecutionCallableRunner(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/baseoperator.py", line 425, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/operators/bash.py", line 276, in execute
+    raise AirflowException(
+airflow.exceptions.AirflowException: Bash command failed. The command returned a non-zero exit code 1.
+[2026-07-30T18:11:56.245+0000] {taskinstance.py:1242} INFO - Marking task as FAILED. dag_id=finascore_ml_pipeline, task_id=01_collect_data, run_id=scheduled__2026-07-19T00:00:00+00:00, execution_date=20260719T000000, start_date=20260730T181118, end_date=20260730T181156
+[2026-07-30T18:11:56.307+0000] {taskinstance.py:349} INFO - ::group::Post task execution logs
+[2026-07-30T18:11:56.308+0000] {standard_task_runner.py:124} ERROR - Failed to execute job 2 for task 01_collect_data (Bash command failed. The command returned a non-zero exit code 1.; 172)
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/task/task_runner/standard_task_runner.py", line 117, in _start_by_fork
+    ret = args.func(args, dag=self.dag)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/cli/cli_config.py", line 49, in command
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/utils/cli.py", line 116, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/cli/commands/task_command.py", line 483, in task_run
+    task_return_code = _run_task_by_selected_method(args, _dag, ti)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/cli/commands/task_command.py", line 256, in _run_task_by_selected_method
+    return _run_raw_task(args, ti)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/cli/commands/task_command.py", line 341, in _run_raw_task
+    return ti._run_raw_task(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/utils/session.py", line 97, in wrapper
+    return func(*args, session=session, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 3030, in _run_raw_task
+    return _run_raw_task(
+           ^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 282, in _run_raw_task
+    TaskInstance._execute_task_with_callbacks(
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 3185, in _execute_task_with_callbacks
+    result = self._execute_task(context, task_orig)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 3209, in _execute_task
+    return _execute_task(self, context, task_orig)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 776, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 742, in _execute_callable
+    return ExecutionCallableRunner(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/baseoperator.py", line 425, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/operators/bash.py", line 276, in execute
+    raise AirflowException(
+airflow.exceptions.AirflowException: Bash command failed. The command returned a non-zero exit code 1.
+[2026-07-30T18:11:56.332+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 1
+[2026-07-30T18:11:56.593+0000] {taskinstance.py:3925} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-07-30T18:11:56.597+0000] {local_task_job_runner.py:245} INFO - ::endgroup::

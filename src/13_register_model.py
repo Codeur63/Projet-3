@@ -80,7 +80,7 @@ def find_best_available_candidate():
             "selection_reason": "Modèle champion issu de 05_train.py.",
         }
 
-    raise FileNotFoundError("Aucun candidat modèle trouvé. Exécute d'abord 05_train.py, " "08_tune_xgboost_optuna.py ou 11_train_with_anomalies.py.")
+    raise FileNotFoundError("Aucun candidat modèle trouvé. Exécute d'abord 05_train.py, 08_tune_xgboost_optuna.py ou 11_train_with_anomalies.py.")
 
 
 def build_promotion_decision(metrics):
@@ -92,7 +92,7 @@ def build_promotion_decision(metrics):
     if passed:
         decision = "PROMOTE_TO_PRODUCTION"
         registry_status = "production_candidate"
-        comment = "Le modèle respecte le seuil AUC >= 0.80. " "Il peut être considéré comme candidat à la production."
+        comment = "Le modèle respecte le seuil AUC >= 0.80. Il peut être considéré comme candidat à la production."
     else:
         decision = "NOT_PROMOTE"
         registry_status = "staging_only"

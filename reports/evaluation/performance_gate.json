@@ -1,7 +1,7 @@
 {
     "metric": "auc_roc",
     "required_threshold": 0.8,
-    "observed_value": 0.6376162969627784,
+    "observed_value": 0.6377838781683218,
     "passed": false,
     "decision": "NOT_PRIMOTE",
     "comment": "Le modèle ne respecte pas le seuil AUC >= 0.80. Il ne doit pas être promu en production. Le pipeline reste utilisable en environnement expérimental/staging."

@@ -10,7 +10,7 @@ from locust import HttpUser, between, task
 
 SAMPLE_FEATURES_1 = {
     "age": 35,
-    "pays": "cameroun",
+    "pays": "CMR",
     "secteur_activite": "commerce",
     "zone": "urbaine",
     "revenu_mensuel_xaf": 250000,
@@ -24,8 +24,8 @@ SAMPLE_FEATURES_1 = {
 
 SAMPLE_FEATURES_2 = {
     "age": 48,
-    "pays": "gabon",
-    "secteur_activite": "transport",
+    "pays": "GAB",
+    "secteur_activite": "commerce",
     "zone": "semi_urbaine",
     "revenu_mensuel_xaf": 180000,
     "anciennete_emploi": 2,
@@ -38,7 +38,7 @@ SAMPLE_FEATURES_2 = {
 
 SAMPLE_FEATURES_3 = {
     "age": 29,
-    "pays": "congo",
+    "pays": "COG",
     "secteur_activite": "services",
     "zone": "urbaine",
     "revenu_mensuel_xaf": 320000,

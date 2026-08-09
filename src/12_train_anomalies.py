@@ -56,7 +56,7 @@ def load_data():
 
     for path in [x_train_path, x_test_path, y_train_path, y_test_path]:
         if not path.exists():
-            raise FileNotFoundError(f"Fichier introuvable : {path}. " "Exécute d'abord src/11_anomaly_detection.py.")
+            raise FileNotFoundError(f"Fichier introuvable : {path}. Exécute d'abord src/11_detection.py.")
 
     X_train = pd.read_parquet(x_train_path)
     X_test = pd.read_parquet(x_test_path)
@@ -74,7 +74,7 @@ def remove_excluded_columns(X):
 
 # Utiliser les meilleurs parametres de Optuna
 def load_best_params():
-    params_path = REPORTS_DIR / "optuna_best_params.json"
+    params_path = Path("reports/optuna/optuna_best_params.json")
 
     if params_path.exists():
         with open(params_path, "r", encoding="utf-8") as file:
@@ -138,7 +138,7 @@ def build_model_pipeline(X_train, y_train, params):
     print(f"Colonnes catégorielles : {len(categorical_cols)}")
 
     if "anomaly_score" not in X_train.columns or "is_anomaly" not in X_train.columns:
-        raise ValueError("Les colonnes anomaly_score et is_anomaly sont absentes. " "Exécute d'abord src/10_anomaly_detection.py.")
+        raise ValueError("Les colonnes anomaly_score et is_anomaly sont absentes. Exécute d'abord src/11_detection.py.")
 
     preprocessor = build_preprocessor(numeric_cols, categorical_cols)
 
@@ -180,8 +180,8 @@ def compute_metrics(y_true, y_proba, threshold=THRESHOLD):
 # Résultats des précedents sans anomalies
 def load_previous_results():
     candidates = [
-        REPORTS_DIR / "optuna_tuning_report.json",
-        REPORTS_DIR / "final_evaluation_report.json",
+        Path("reports/optuna/optuna_tuning_report.json"),
+        Path("reports/evaluation/final_evaluation_report.json"),
     ]
 
     for path in candidates:
@@ -282,7 +282,7 @@ def main():
         "test_metrics_with_anomalies": metrics,
         "previous_results_without_anomalies": previous_results,
         "performance_gate": performance_gate,
-        "interpretation": ("Les features d'anomalie améliorent le modèle si l'AUC augmente de façon notable " "par rapport au modèle sans anomalies. Si le gain est faible, elles peuvent être conservées " "comme diagnostic métier mais ne changent pas la décision de non-promotion."),
+        "interpretation": ("Les features d'anomalie améliorent le modèle si l'AUC augmente de façon notable par rapport au modèle sans anomalies. Si le gain est faible, elles peuvent être conservées comme diagnostic métier mais ne changent pas la décision de non-promotion."),
     }
 
     report_path = REPORTS_DIR / "anomaly_feature_model_comparison.json"
