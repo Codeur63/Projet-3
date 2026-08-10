@@ -3,9 +3,7 @@ DAG Airflow pour orchestrer le pipeline ML FinaScore.
     - automatiser l'exécution des scripts de pipeline
     - tracer les logs de chaque étape
     - arrêter le pipeline si une étape échoue
-    - Rendre le MLOps reproductible
-    - décision de promotion du modèle (performance gate)
-    - détection de drift après entraînement
+    - Rentre le MLOps reproductible
 """
 
 from datetime import datetime, timedelta
@@ -57,7 +55,6 @@ with DAG(
     train_models = BashOperator(
         task_id="05_train_models",
         bash_command=f"cd {PROJECT_DIR} && {PYTHON} src/05_train.py",
-        execution_timeout=timedelta(hours=4),
     )
 
     evaluate_model = BashOperator(
@@ -65,14 +62,9 @@ with DAG(
         bash_command=f"cd {PROJECT_DIR} && {PYTHON} src/06_evaluate.py",
     )
 
-    register_model = BashOperator(
-        task_id="13_register_model",
-        bash_command=f"cd {PROJECT_DIR} && {PYTHON} src/13_register_model.py",
-    )
-
     drift_monitoring = BashOperator(
-        task_id="14_drift_monitoring",
+        task_id="14_monitoring",
         bash_command=f"cd {PROJECT_DIR} && {PYTHON} src/14_monitoring.py",
     )
 
-    (collect_data >> clean_data >> feature_engineering >> split_data >> train_models >> evaluate_model >> register_model >> drift_monitoring)
+    (collect_data >> clean_data >> feature_engineering >> split_data >> train_models >> evaluate_model >> drift_monitoring)

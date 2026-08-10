@@ -5,33 +5,13 @@ Application Streamlit FinaScore SA
     - Prédiction par lot depuis un fichier CSV
 """
 
-import sys
-from pathlib import Path
-
-# Correction d'ombre : le dossier local `streamlit/` masque le paquet Streamlit.
-# On retire du sys.path le dossier du script et la racine du projet (résolue via CWD)
-# afin que `import streamlit` retrouve le paquet installé.
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
-
-def _keep_path(p):
-    try:
-        if not p or Path(p).name == "streamlit":
-            return False
-        return Path(p).resolve() != _PROJECT_ROOT
-    except OSError:
-        return True
-
-
-sys.path = [p for p in sys.path if _keep_path(p)]
-
-import pandas as pd  # noqa: E402
-import requests  # noqa: E402
-import streamlit as st  # noqa: E402
+import pandas as pd
+import requests
+import streamlit as st
 
 st.set_page_config(page_title="FinaScore Playground", page_icon=":credit_card:", layout="wide")
 
-TRAIN_PARQUET = _PROJECT_ROOT / "data/splits/X_train.parquet"
+TRAIN_PARQUET = "data/splits/X_train.parquet"
 
 # Colonnes dérivées internes du modèle : non saisissables par l'utilisateur
 DERIVED_COLS = {
@@ -43,7 +23,6 @@ DERIVED_COLS = {
 
 # Options par défaut pour les colonnes catégorielles (si données d'entraînement indisponibles)
 CATEGORICAL_FALLBACK = {
-    "pays": ["CMR", "GAB", "COG", "CAF", "TCD", "GNQ"],
     "secteur_activite": ["commerce", "agriculture", "artisanat", "services", "elevage"],
     "zone": ["urbain", "periurbain", "rural"],
     "operateur": ["MTN", "ORANGE", "CAMTEL", "mixte"],

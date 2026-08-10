@@ -88,3 +88,18 @@ voir le tracking des modeles ``` mlfow ui ```, lancer l'API ```docker-compose up
 **Lecture :** les variables fournies portent peu de signal individuel ; AUC ≥ 0.80 n'est pas atteignable avec ce jeu de données. Le levier principal pour y parvenir est la **collecte de nouvelles données** (d'après nos roc_curves).
 
 **Décision de promotion :** le performance gate (AUC ≥ 0.80) bloque la promotion en production ; le modèle reste en `staging_only`. Le seuil métier (coût FN = 5×FP) est optimisé dans `06_evaluate.py` (`reports/evaluation/final_evaluation_report.json`).
+
+
+## 6. Tech Stack
+> Data & Machine Learning
+``` python pandas Numpy Scikit-learn ``` et modèle
+> MLFlow 
+``` Mlflow GitHUB Actions ```
+> Backend 
+``` FastAPI ```
+> Infrastrucure
+``` Docker Docker compose Redis ```
+> Monitoring 
+``` Prometheus Grafana ```
+> Testing & Qualité
+``` Pytest ruff Coverage ``` 
